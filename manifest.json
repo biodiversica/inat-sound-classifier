@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Bioacoustic models iNaturalist",
+  "version": "0.1",
+  "permissions": [
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://api.inaturalist.org/*",
+    "https://static.inaturalist.org/*",
+    "https://huggingface.co/*",
+    "https://api.gbif.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.inaturalist.org/observations/*"],
+      "js": [
+        "onnx/ort.min.js", 
+        "config.js", 
+        "ui.js", 
+        "audio.js", 
+        "model.js", 
+        "content.js",
+        "geo.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "onnx/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

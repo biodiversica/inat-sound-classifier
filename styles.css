@@ -1,0 +1,219 @@
+/* styles.css */
+#bio-model-panel {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 520px;
+  background: #fcfee5ff;
+  color: #118b50;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 10px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: width 0.2s ease-in-out;
+}
+
+#bio-model-panel.minimized {
+  width: 300px;
+}
+
+#bio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background:#118b50;
+  color: #fcfee5ff;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+}
+
+#bio-toggle-btn {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+#bio-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.bio-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#bio-model-select {
+  background: #118b50;
+  color: #fcfee5ff;
+  border: 1px solid #111;
+  padding: 2px;
+  outline: none;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-model-select:hover {
+  background: #44bc82;
+}
+
+#bio-run-btn {
+  background: rgb(0, 123, 176) ;
+  color: #fcfee5ff;
+  border: 1px solid #444; /* Dimmer border */
+  padding: 3px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-run-btn:hover {
+  background: #44bc82;
+  border-color: rgb(0, 123, 176); /* Subtle red hint on hover */
+}
+
+#bio-clear-btn {
+  background: #c00160;
+  color: #fcfee5ff; /* Dimmer text */
+  border: 1px solid #444; /* Dimmer border */
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+#bio-clear-btn:hover {
+  border-color: #c00160; /* Subtle red hint on hover */
+  background: #44bc82;
+}
+
+#bio-settings-panel {
+  border: 1px dashed #118b50;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #fcfee5ff;
+}
+
+.bio-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 11px;
+}
+
+.bio-setting-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Force the sliders to be green */
+.bio-setting-row input[type=range] {
+  width: 120px;
+  accent-color: #118b50 !important; /* The magic property for custom sliders */
+  cursor: ew-resize;
+}
+
+.bio-custom-summary {
+  cursor: pointer;
+  color: #aaa;
+  margin-bottom: 5px;
+  font-family: 'Courier New', monospace !important;
+}
+
+#bio-custom-model {
+  width: 100%;
+  height: 80px;
+  background: #fcfee5ff;
+  margin-top: 5px;
+  font-size: 10px;
+  border: 1px solid #444;
+  box-sizing: border-box;
+}
+
+#bio-add-custom-btn {
+  background: #118b50;
+  color: #fcfee5ff;
+  border: none;
+  padding: 2px 5px;
+  margin-top: 2px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-add-custom-btn:hover {
+  background: #44bc82;
+}
+
+#bio-log-area {
+  max-height: 250px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  border: 1px solid #118b50;
+  padding: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #118b50 #fcfee5ff;
+  /* This prevents the browser from shrinking spaces */
+  white-space: pre !important; 
+  /* Ensure the text doesn't wrap and break the table rows */
+  overflow-x: auto !important;
+}
+
+.bio-log-entry {
+  border-bottom: 1px solid rgb(228, 230, 208);
+  padding: 3px 0;
+}
+
+/* Result-specific styles */
+.bio-link-model { 
+    color: #0ff !important; 
+    text-decoration: none; 
+}
+.bio-link-taxa { 
+    background: #c00160 !important; 
+    color: white; 
+    text-decoration: underline; 
+    font-style: italic; 
+}
+.bio-line-header { 
+    background: rgb(0, 123, 176) !important; 
+    color: #fcfee5ff;
+    font-weight: bold; 
+    display: block; 
+    margin-top: 10px; 
+}
+.bio-geo-match { 
+    color: #fcfee5ff; 
+    background: #118b50 !important; 
+}
+.bio-geo-mismatch { 
+    color: red !important; 
+}
+.bio-geo-warning { 
+    background: red; 
+    color: #fcfee5ff !important; 
+}
+.bio-error { 
+    color: #f55 !important; 
+}
+.bio-separator { 
+    border-top: 1px dashed #444; 
+    margin: 5px 0; 
+    display: block; 
+}
+
+.bio-bottom-controls {
+  text-align: right !important;
+  padding: 5px;
+}
+

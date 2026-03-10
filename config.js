@@ -27,7 +27,7 @@ window.BioModelConfig = {
       skipLabelsHeader: 1
     }
   },
-  overlapPercentage: 0.5,
+  overlapPercentage: 0,
   confidenceThreshold: 0.5
 };
 

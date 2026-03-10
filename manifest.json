@@ -27,6 +27,7 @@
         "content.js",
         "geo.js"
       ],
+      "css" : ["styles.css"],
       "run_at": "document_idle"
     }
   ],

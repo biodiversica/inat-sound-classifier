@@ -1,6 +1,8 @@
+// content.js
 (async () => {
   let ui;
   let engine;
+  let currentAttachedId = null;
 
   function getObservationId() {
     const meta = document.querySelector("meta[property='og:url']");
@@ -11,108 +13,133 @@
 
   async function runAnalysis(modelConfig) {
     const obsId = getObservationId();
-    if (!obsId) {
-      ui.log("No observation ID found on this page.");
-      return;
-    }
+    if (!obsId) return ui.log("<span class='bio-error'>ID Error</span>");
 
     ui.runBtn.disabled = true;
-    ui.runBtn.innerText = "Running...";
+    ui.runBtn.innerText = "Analyzing...";
 
     try {
-      ui.log(`Fetching audio for observation ${obsId}...`);
+      ui.log(`Target: Observation ${obsId}`);
       const urls = await window.BioAudio.fetchObservationAudio(obsId);
-      
-      if (!urls.length) { ui.log("No sounds found."); return; }
+      if (!urls.length) return ui.log("No audio found.");
 
+      if (!engine) engine = new window.BioModelEngine(ui);
+      await engine.loadModel(modelConfig);
+
+      let soundFileIndex = 1;
       for (const url of urls) {
-        // ... (audio decoding & model loading code remains the same) ...
+        ui.log(`<span class="bio-line-header">Analyzing sound ${soundFileIndex}...</span>`);
         const decoded = await window.BioAudio.decodeAudio(url);
         const samples = await window.BioAudio.resample(decoded, modelConfig.sampleRate);
         const chunks = window.BioAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.BioModelConfig.overlapPercentage);
 
-        ui.log(`Selected model: <a href="${modelConfig.about}" target="_blank" style="color:#0ff">${modelConfig.name} v${modelConfig.version}</a>`);
-        await engine.loadModel(modelConfig);
-        ui.log(`Analyzing ${chunks.length} chunks...`);
+        let best = { range:null, name: null, score: 0 };
 
-        // Track the absolute best detection for this audio file
-        let bestOverall = { name: null, score: 0 };
+        const timeWidth = 15;
+        const speciesWidth = 32;
+        const confidenceWidth = 12;
+
+        ui.printTableHeader(timeWidth, speciesWidth, confidenceWidth);
 
         for (let i = 0; i < chunks.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 0)); 
+          await new Promise(r => setTimeout(r, 0));
           const res = await engine.predictChunk(chunks[i]);
-          
           const t1 = (i * (modelConfig.windowSize * (1 - window.BioModelConfig.overlapPercentage))).toFixed(1);
           const t2 = (i * (modelConfig.windowSize * (1 - window.BioModelConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
-          
           if (res.score > window.BioModelConfig.confidenceThreshold) {
-            const sciName = res.label.split("_")[0];
-            // const slug = sciName.replace(" ", "_");
-            // const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
-            // ui.log(`${t1} - ${t2}s : <a href="${taxaUrl}" target="_blank" style="color:#0f0"><i>${sciName}</i></a> (${res.score.toFixed(2)})`);
-            ui.log(`${t1} - ${t2}s : <i>${sciName}</i> (${res.score.toFixed(2)})`);
-            
+            const speciesName = res.label.split("_")[0].replace(/[\n\r]/g, "").trim();
+            const timeRange = `${t1} - ${t2}s`;
 
-            // Update highest score
-            if (res.score > bestOverall.score) {
-              bestOverall = { name: sciName, score: res.score };
-            }
+            // Format cells with fixed widths
+            const col1 = ui.pad(timeRange, timeWidth);
+            const col2 = ui.pad(speciesName, speciesWidth);
+            const col3 = ui.pad(res.score.toFixed(2), confidenceWidth);
+
+            // Log the formatted row
+            ui.log(`${col1} | <i>${col2}</i> | ${col3}`);
+
+            if (res.score > best.score) best = { range: timeRange, name: speciesName, score: res.score };
           }
         }
-        
-        // --- NEW: Geographic Validation Step ---
-        if (bestOverall.name) {
-          const slug = bestOverall.name.replace(" ", "_");
+
+        if (best.name) {
+          const slug = best.name.replace(" ", "_");
           const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
-          ui.log(`<br><b style="color:#0ff">--- Geo Validation ---</b>`);
-          ui.log(`Top detection:  <a href="${taxaUrl}" target="_blank" style="color:#FF00FF"><u><i>${bestOverall.name}</i></u></a> (${bestOverall.score.toFixed(2)})`);
-          ui.log(`Fetching GBIF & iNat coordinates...`);
-          
+          ui.log(`<b>Top detection:</b>`);
+          ui.log(`<b>${ui.pad(best.range, timeWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(best.name, speciesWidth)}</i></u></a>  | <b>${ui.pad(best.score.toFixed(2), confidenceWidth)}</b>`);
+
+          ui.log(`<span class="bio-line-header">Validating species location...</span>`);
+          ui.log(`Checking GBIF coordinate range for <i>${best.name}</i>`);
           const coords = await window.BioGeo.getObservationCoords(obsId);
+          const bbox = await window.BioGeo.getSpeciesBBox(best.name);
           if (!coords) {
-            ui.log(`<span style="color:#f90">Could not find coordinates for this observation.</span>`);
+              ui.log(`<span class='bio-error'>Could not find coordinates for this observation.</span>`);
           } else {
-            const bbox = await window.BioGeo.getSpeciesBBox(bestOverall.name);
-            if (!bbox) {
-              ui.log(`<span style="color:#f90">Could not fetch GBIF range for ${bestOverall.name}.</span>`);
-            } else {
-              const isMatch = window.BioGeo.isWithinBBox(coords, bbox);
-              if (isMatch) {
-                ui.log(`<span style="color:#0f0">✓ Geographic match!</span> Obs coords (${coords.lat.toFixed(2)}, ${coords.lon.toFixed(2)}) are within the GBIF bounding box.`);
-              } else {
-                ui.log(`<span style="color:#f55">⚠ Geographic mismatch.</span> Obs coords are outside the known GBIF bounding box.`);
-              }
-            }
+             if (!bbox) {
+               ui.log(`<span class='bio-error'>Could not fetch GBIF range for ${best.name}.</span>`);
+             } else {
+               const isMatch = window.BioGeo.isWithinBBox(coords, bbox);
+               const cls = isMatch ? "bio-geo-match" : "bio-geo-mismatch";
+               ui.log(`<span class="${cls}">${isMatch ? "✓ Within GBIF bounding box for this species" : "⚠ Outside GBIF bounding box for this species"}</span>`);
+             }
           }
         } else {
           ui.log(`No species detected above threshold.`);
         }
-        ui.log("--- Analysis Complete ---<br>");
+        ui.log(`<b>End of Analysis.</b>`);
+        soundFileIndex += 1;
       }
     } catch (e) {
-      ui.log(`<span style="color:red">Error: ${e.message}</span>`);
-      console.error(e);
+      ui.log(`<span class="bio-error">Fail: ${e.message}</span>`);
     } finally {
       ui.runBtn.disabled = false;
       ui.runBtn.innerText = "Run Analysis";
     }
   }
 
-
-
-  function init() {
-    if (document.getElementById("model-panel")) return; // Prevent duplicates
-    
+  async function init() {
     const obsId = getObservationId();
-    if (obsId) {
-      ui = new window.BioUI(runAnalysis);
-      engine = new window.BioModelEngine(ui);
-      ui.log("Observation detected. Select a model and press Run.");
+    
+    // Stop if no ID or if we've already started processing this specific ID
+    if (!obsId || obsId === currentAttachedId) return;
+
+    // 1. LOCK THE STATE IMMEDIATELY! 
+    // This prevents the setInterval from spamming the API while we wait for the fetch.
+    currentAttachedId = obsId;
+
+    try {
+      // 2. Check if this observation actually has audio files
+      const audioUrls = await window.BioAudio.fetchObservationAudio(obsId);
+      
+      // 3. Handle the "No Audio" scenario
+      if (!audioUrls || audioUrls.length === 0) {
+        // If the UI exists (from a previous observation), we must hide it
+        if (ui && ui.panel) {
+          ui.panel.style.setProperty('display', 'none', 'important');
+        }
+        return; // Stop execution here
+      }
+
+      // 4. Handle the "Audio Found" scenario
+      if (!ui) {
+        // First time seeing audio on this session, build the UI
+        ui = new window.BioUI(runAnalysis);
+      } else {
+        // UI already exists, just reveal it and clear old logs
+        ui.panel.style.setProperty('display', 'flex', 'important'); 
+        ui.clearLog();
+      }
+
+      ui.log("Select a model and press <b>'Run Analysis'</b>");
+      
+    } catch (error) {
+      console.warn("BioAcoustics: Failed to check for audio.", error);
+      // Reset the ID so the interval tries again on the next tick
+      currentAttachedId = null; 
     }
   }
 
-  // Monitor DOM for SPA navigation (iNaturalist uses Turbolinks/React routing sometimes)
-  const observer = new MutationObserver(init);
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Handle iNaturalist's dynamic page transitions
+  setInterval(init, 2000);
   init();
 })();

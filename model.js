@@ -27,7 +27,17 @@ window.BioModelEngine = class BioModelEngine {
     }
 
     this.currentModelConfig = modelConfig;
-    this.ui.log("Preparing model session...");
+    this.ui.log(`<span class="bio-line-header">Preparing model session...</span>`);
+
+    // Print model config
+    this.ui.log(`<b>Selected model: ${modelConfig.name} v${modelConfig.version}</b>`);
+    this.ui.log(`- Duration of analysis window: ${modelConfig.windowSize}s`);
+    this.ui.log(`- Sample rate: ${modelConfig.sampleRate}Hz`);
+    this.ui.log(`- Input index: ${modelConfig.inputIndex}`);
+    this.ui.log(`- Output index: ${modelConfig.outputIndex}`);
+    this.ui.log(`- Using softmax: ${modelConfig.softmax}`);
+    this.ui.log(`- Sources: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model url</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels url</u></a>`);
+
 
     // Fetch model buffer and labels using Cache
     const modelBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
@@ -35,7 +45,7 @@ window.BioModelEngine = class BioModelEngine {
     
     this.labels = labelsText.trim().split("\n");
     this.session = await ort.InferenceSession.create(modelBuffer, { executionProviders: ["wasm"] });
-    this.ui.log("Model successfully loaded to memory.");
+    this.ui.log("<b>Model successfully loaded to memory</b>");
   }
 
   sigmoid(x) { return 1 / (1 + Math.exp(-x)); }

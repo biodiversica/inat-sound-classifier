@@ -1,3 +1,4 @@
+// audio.js
 window.BioAudio = {
   async fetchObservationAudio(obsId) {
     // 1. Try API first
@@ -18,10 +19,31 @@ window.BioAudio = {
   },
 
   async decodeAudio(url) {
+    // 1. Ask background.js to fetch the file
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ type: "FETCH_AUDIO", url: url }, resolve);
+    });
+
+    if (!response.success) {
+      throw new Error("Background fetch failed: " + response.error);
+    }
+
+    // 2. Convert the Base64 string back into an ArrayBuffer
+    const binaryString = atob(response.data);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    // 3. Decode the audio
     const ctx = new AudioContext();
-    const res = await fetch(url);
-    const buf = await res.arrayBuffer();
-    return await ctx.decodeAudioData(buf);
+    const decoded = await ctx.decodeAudioData(arrayBuffer);
+    
+    // Always close the AudioContext when done to free up memory!
+    await ctx.close(); 
+    return decoded;
   },
 
   async resample(audioBuffer, targetSampleRate) {

@@ -1,0 +1,18 @@
+{
+  "id": "birdnet",
+  "name": "BirdNET",
+  "version": 2.4,
+  "about": "https://birdnet.cornell.edu/",
+  "modelUrl": "https://huggingface.co/justinchuby/BirdNET-onnx/resolve/main/model.onnx",
+  "labelsUrl": "https://huggingface.co/justinchuby/BirdNET-onnx/resolve/main/BirdNET_GLOBAL_6K_V2.4_Labels.txt",
+  "sampleRate": 48000,
+  "windowSize": 3,
+  "softmax": false,
+  "inputIndex": 0,
+  "outputIndex": 0,
+  "skipLabelsHeader": 0,
+  "bbox": null,
+  "foundationModel": "BirdNET",
+  "format": "onnx",
+  "taxa": ["aves"]
+}

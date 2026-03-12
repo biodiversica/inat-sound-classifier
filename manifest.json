@@ -36,7 +36,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "onnx/*"
+        "onnx/*",
+        "model_zoo/*.json",
+        "language/*.json"
       ],
       "matches": ["<all_urls>"]
     }

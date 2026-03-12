@@ -11,6 +11,87 @@
     return match ? match[1] : null;
   }
 
+  // A helper to extract lat/lon from the iNaturalist DOM
+  function getObservationLocation() {
+    // iNaturalist stores coords in the map link or global variables.
+    // Example checking a common metadata tag or DOM element:
+    const latElement = document.querySelector('meta[property="inat:latitude"]');
+    const lonElement = document.querySelector('meta[property="inat:longitude"]');
+    
+    if (latElement && lonElement) {
+      return {
+        lat: parseFloat(latElement.content),
+        lon: parseFloat(lonElement.content)
+      };
+    }
+    return null; // Observation has no location data
+  }
+
+  function isWithinBBox(obsLat, obsLon, bbox) {
+    if (!bbox) return true; // Global model (no bbox restrictions)
+    
+    const [minLat, minLon, maxLat, maxLon] = bbox;
+    return (obsLat >= minLat && obsLat <= maxLat && obsLon >= minLon && obsLon <= maxLon);
+  }
+
+  async function loadGeographicModelRegistry() {
+    window.BioConfig.modelRegistry = {}; // Clear existing
+    const obsLocation = getObservationLocation();
+
+    try {
+      // 1. Fetch the index of available models
+      const indexUrl = chrome.runtime.getURL("model_zoo/index.json");
+      const indexRes = await fetch(indexUrl);
+      const modelFiles = await indexRes.json();
+
+      // 2. Fetch and evaluate each model
+      for (const file of modelFiles) {
+        const modelUrl = chrome.runtime.getURL(`model_zoo/${file}`);
+        const modelRes = await fetch(modelUrl);
+        const modelData = await modelRes.json();
+
+        // 3. Geographic Validation Check
+        let shouldAddModel = true;
+        if (modelData.bbox && obsLocation) {
+          shouldAddModel = isWithinBBox(obsLocation.lat, obsLocation.lon, modelData.bbox);
+        } else if (modelData.bbox && !obsLocation) {
+          // Decide what to do if the model requires a location but the observation is hidden/missing coords.
+          // Usually safer to exclude it to prevent false positives.
+          shouldAddModel = true; 
+        }
+
+        if (shouldAddModel) {
+          // Add to the global registry using the JSON 'id' as the key
+          window.BioConfig.modelRegistry[modelData.id] = modelData;
+        }
+      }
+      console.log("Valid models for this location:", Object.keys(window.BioConfig.modelRegistry));
+
+    } catch (error) {
+      console.error("Failed to load model registry:", error);
+    }
+  }
+
+  async function loadLanguageOptions() {
+    window.BioConfig.uiText = {}; // Clear existing
+
+    try {
+      const indexUrl = chrome.runtime.getURL("language/index.json");
+      const indexRes = await fetch(indexUrl);
+      const languageFiles = await indexRes.json();
+
+      for (const file of languageFiles) {
+        const languageUrl = chrome.runtime.getURL(`language/${file}`);
+        const languageRes = await fetch(languageUrl);
+        const languageData = await languageRes.json();
+
+        window.BioConfig.uiText[languageData.id] = languageData;
+      }
+    } catch (error) {
+      console.error("Failed to load language options:", error);
+    }
+  }
+
   async function runAnalysis(modelConfig, languageConfig) {
     const obsId = getObservationId();
     if (!obsId) return ui.log("<span class='bio-error'>ID Error</span>");
@@ -125,11 +206,25 @@
         return; // Stop execution here
       }
 
-      //Get saved language (default to 'en' if null)
-      const savedLang = localStorage.getItem('bio-language') || 'en';
+      // Dynamically build the registry based on location
+      await loadGeographicModelRegistry();
+      
+      // IF the registry is empty (no models cover this area), handle it gracefully
+      if (Object.keys(window.BioConfig.modelRegistry).length === 0) {
+        console.log("No models available for this geographic region.");
+        return; 
+      }
 
-      // Get language setting
-      const uiInputText = window.BioConfig.uiText[savedLang];
+      // Load language options
+      await loadLanguageOptions();
+
+      const savedLang = localStorage.getItem('bio-language') || 'en';
+      const uiInputText = window.BioConfig.uiText[savedLang] || window.BioConfig.uiText['en']; // Fallback to en
+
+      if (!uiInputText) {
+        console.error("Language data not found for:", savedLang);
+        return; 
+      }
 
       // Handle the "Audio Found" scenario
       if (!ui) {

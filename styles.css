@@ -19,7 +19,7 @@
 }
 
 #bio-model-panel.minimized {
-  width: 300px;
+  width: 250px;
 }
 
 #bio-header {
@@ -125,7 +125,7 @@
 
 .bio-custom-summary {
   cursor: pointer;
-  color: #aaa;
+  color: #118b50;
   margin-bottom: 5px;
   font-family: 'Courier New', monospace !important;
 }
@@ -136,7 +136,7 @@
   background: #fcfee5ff;
   margin-top: 5px;
   font-size: 10px;
-  border: 1px solid #444;
+  border: 1px solid #118b50;
   box-sizing: border-box;
 }
 
@@ -159,7 +159,7 @@
   max-height: 250px;
   overflow-y: auto;
   border-top: 1px solid #333;
-  border: 1px solid #118b50;
+  border: 1px dashed #118b50;
   padding: 5px;
   scrollbar-width: thin;
   scrollbar-color: #118b50 #fcfee5ff;
@@ -217,3 +217,43 @@
   padding: 5px;
 }
 
+/* Container for the tooltip */
+.bio-help {
+  position: relative;
+  cursor: help;
+  /* Visual cue that help is available */
+  /* border-bottom: 1px dotted #0f0;  */
+}
+
+/* The actual tooltip box */
+.bio-help:after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 0%; /* Position above the text */
+  right: 100%;
+  /* transform: translateX(-50%); */
+  background-color: #118b50;
+  color: #fcfee5ff;
+  padding: 6px 10px;
+  border: 1px solid #fcfee5ff;
+  border-radius: 4px;
+  /* --- WRAPPING LOGIC --- */
+  white-space: normal;       /* Allows text to wrap to new lines */
+  width: 150px;             /* Forces the box to this width */
+  line-height: 1.4;         /* Makes multi-line text easier to read */
+  text-align: center;       /* Centers the text inside the box */
+  /* ---------------------- */
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none; /* Prevents the tooltip from blocking mouse clicks */
+}
+
+/* Show on hover */
+.bio-help:hover:after {
+  visibility: visible;
+  opacity: 1;
+}

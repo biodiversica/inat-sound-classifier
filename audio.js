@@ -1,21 +1,21 @@
 // audio.js
 window.BioAudio = {
-  async fetchObservationAudio(obsId) {
-    // 1. Try API first
-    try {
-      const apiURL = `https://api.inaturalist.org/v1/observations/${obsId}?include=sounds`;
-      const res = await fetch(apiURL);
-      const json = await res.json();
-      let urls = (json.results?.[0]?.sounds || []).map(s => s.file_url).filter(Boolean);
-      if (urls.length > 0) return urls;
-    } catch (e) {
-      console.warn("API fetch failed, falling back to DOM parsing");
+  async checkObservationSounds(obsId) {
+    
+    const apiURL = `https://api.inaturalist.org/v1/observations/${obsId}?include=sounds`;
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ type: "FETCH_JSON", url: apiURL }, resolve);
+    });
+
+    if (!response.success) {
+      console.warn(`Fetch Error (${url}):`, response.error);
+      return null;
     }
 
-    // 2. Fallback: Find audio tags loaded on the page
-    const audioTags = document.querySelectorAll("audio source");
-    const urls = Array.from(audioTags).map(src => src.src).filter(Boolean);
-    return [...new Set(urls)]; // Return unique URLs
+    const obsInfo = response.data.results;
+
+    let urls = (obsInfo?.[0]?.sounds || []).map(s => s.file_url).filter(Boolean);
+    if (urls.length > 0) return urls;
   },
 
   async decodeAudio(url) {
@@ -61,6 +61,8 @@ window.BioAudio = {
     const size = sampleRate * windowSize;
     const step_size = sampleRate * (windowSize * (1 - overlapSec));
     const chunks = [];
+    // console.log(`window size: ${size}`)
+    // console.log(`step size: ${size}`)
     for (let i = 0; i < samples.length; i += step_size) {
       let chunk = samples.slice(i, i + size);
       if (chunk.length < size) {
@@ -68,6 +70,8 @@ window.BioAudio = {
         padded.set(chunk);
         chunk = padded;
       }
+      if(chunk.length > size) chunk = chunk.slice(0,size);
+      // console.log(`chunk length: ${chunk.length}`)
       chunks.push(chunk);
     }
     return chunks;

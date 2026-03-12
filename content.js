@@ -20,7 +20,7 @@
 
     try {
       ui.log(`Target: Observation ${obsId}`);
-      const urls = await window.BioAudio.fetchObservationAudio(obsId);
+      const urls = await window.BioAudio.checkObservationSounds(obsId);
       if (!urls.length) return ui.log("No audio found.");
 
       if (!engine) engine = new window.BioModelEngine(ui);
@@ -31,29 +31,25 @@
         ui.log(`<span class="bio-line-header">Analyzing sound ${soundFileIndex}...</span>`);
         const decoded = await window.BioAudio.decodeAudio(url);
         const samples = await window.BioAudio.resample(decoded, modelConfig.sampleRate);
-        const chunks = window.BioAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.BioModelConfig.overlapPercentage);
+        const chunks = window.BioAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.BioConfig.overlapPercentage);
 
         let best = { range:null, name: null, score: 0 };
 
-        const timeWidth = 15;
-        const speciesWidth = 32;
-        const confidenceWidth = 12;
-
-        ui.printTableHeader(timeWidth, speciesWidth, confidenceWidth);
+        ui.printTableHeader(window.BioConfig.timeCellWidth, window.BioConfig.speciesCellWidth, window.BioConfig.confidenceCellWidth, "bio-header");
 
         for (let i = 0; i < chunks.length; i++) {
           await new Promise(r => setTimeout(r, 0));
           const res = await engine.predictChunk(chunks[i]);
-          const t1 = (i * (modelConfig.windowSize * (1 - window.BioModelConfig.overlapPercentage))).toFixed(1);
-          const t2 = (i * (modelConfig.windowSize * (1 - window.BioModelConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
-          if (res.score > window.BioModelConfig.confidenceThreshold) {
+          const t1 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage))).toFixed(1);
+          const t2 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
+          if (res.score > window.BioConfig.confidenceThreshold) {
             const speciesName = res.label.split("_")[0].replace(/[\n\r]/g, "").trim();
             const timeRange = `${t1} - ${t2}s`;
 
             // Format cells with fixed widths
-            const col1 = ui.pad(timeRange, timeWidth);
-            const col2 = ui.pad(speciesName, speciesWidth);
-            const col3 = ui.pad(res.score.toFixed(2), confidenceWidth);
+            const col1 = ui.pad(timeRange, window.BioConfig.timeCellWidth);
+            const col2 = ui.pad(speciesName, window.BioConfig.speciesCellWidth);
+            const col3 = ui.pad(res.score.toFixed(2), window.BioConfig.confidenceCellWidth);
 
             // Log the formatted row
             ui.log(`${col1} | <i>${col2}</i> | ${col3}`);
@@ -66,9 +62,9 @@
           const slug = best.name.replace(" ", "_");
           const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
           ui.log(`<b>Top detection:</b>`);
-          ui.log(`<b>${ui.pad(best.range, timeWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(best.name, speciesWidth)}</i></u></a>  | <b>${ui.pad(best.score.toFixed(2), confidenceWidth)}</b>`);
+          ui.log(`<b>${ui.pad(best.range, window.BioConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(best.name, window.BioConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(best.score.toFixed(2), window.BioConfig.confidenceCellWidth)}</b>`);
 
-          ui.log(`<span class="bio-line-header">Validating species location...</span>`);
+          ui.log(`<span class="bio-line-header">Validating top detection species location...</span>`);
           ui.log(`Checking GBIF coordinate range for <i>${best.name}</i>`);
           const coords = await window.BioGeo.getObservationCoords(obsId);
           const bbox = await window.BioGeo.getSpeciesBBox(best.name);
@@ -109,11 +105,11 @@
 
     try {
       // 2. Check if this observation actually has audio files
-      const audioUrls = await window.BioAudio.fetchObservationAudio(obsId);
+      const audioUrls = await window.BioAudio.checkObservationSounds(obsId);
       
       // 3. Handle the "No Audio" scenario
       if (!audioUrls || audioUrls.length === 0) {
-        // If the UI exists (from a previous observation), we must hide it
+        // If the UI exists (from a previous observation), hide it
         if (ui && ui.panel) {
           ui.panel.style.setProperty('display', 'none', 'important');
         }

@@ -31,12 +31,12 @@ window.BioUI = class BioUI {
   }
 
   // Helper to print a table header
-  printTableHeader(timeWidth, speciesWidth, confidenceWidth) {
+  printTableHeader(timeWidth, speciesWidth, confidenceWidth, tableClass) {
     const col1 = this.pad("Time Window", timeWidth);
     const col2 = this.pad("Species", speciesWidth);
     const col3 = this.pad("Confidence", confidenceWidth);
     
-    this.log(`<b class="bio-header">${col1} | ${col2} | ${col3}</b>`);
+    this.log(`<b class=${tableClass}>${col1} | ${col2} | ${col3}</b>`);
   }
 
   clearLog() {
@@ -62,33 +62,33 @@ window.BioUI = class BioUI {
       <div id="bio-content-wrapper">
         <div class="bio-controls-row">
           <div>
-            <span>Bioacoustic Model:</span>
+            <span class="bio-help" data-tooltip="Bioacoustic models are selected based on the taxa they are able to classify. Some models are available in the registry and the user can also add custom models in the advanced settings section below."><b>Bioacoustic Model:</b></span>
             <select id="bio-model-select"></select>
             <button id="bio-run-btn">Run Analysis</button>
             
           </div>
         </div>
-
-        <div id="bio-settings-panel">
-          <div class="bio-setting-row">
-            <label>Confidence: <span id="bio-conf-val"></span></label>
-            <input type="range" id="bio-conf-slider" min="0.05" max="0.95" step="0.05">
-          </div>
-          <div class="bio-setting-row">
-            <label>Overlap: <span id="bio-overlap-val"></span></label>
-            <input type="range" id="bio-overlap-slider" min="0" max="90" step="10">
-          </div>
-        </div>
         
         <details>
-          <summary class="bio-custom-summary">+ Add Custom Model (JSON)</summary>
+          <summary class="bio-custom-summary">+ Advanced settings</summary>
+          <div id="bio-settings-panel">
+            <div class="bio-setting-row">
+              <label class="bio-help" data-tooltip="This parameter relates to the output score of the model which ranges between 0 and 1. Any detection with score below this threshold is ignored.">Confidence Threshold: <span id="bio-conf-val"></span></label>
+              <input type="range" id="bio-conf-slider" min="0.05" max="0.95" step="0.05">
+            </div>
+            <div class="bio-setting-row">
+              <label class="bio-help" data-tooltip="This parameter corresponds to the percentage of overlap between analysis windows within the observation sound. Each model has its own specific analysis window duration.">Overlap: <span id="bio-overlap-val"></span></label>
+              <input type="range" id="bio-overlap-slider" min="0" max="90" step="10">
+            </div>
+          </div>
+          <text class="bio-help" data-tooltip="The user is able to add a custom model by providing all model properties following the JSON format below."><b>Add custom model (JSON):</b> </text>
           <textarea id="bio-custom-model" placeholder='{"name": "Custom", "version": 1.0, ...}'></textarea>
           <button id="bio-add-custom-btn">Add to List</button>
         </details>
         
         <div id="bio-log-area"></div>
         <div class="bio-bottom-controls"> 
-          <button id="bio-clear-btn" title="Clear Logs">Clear Logs</button>
+          <button id="bio-clear-btn">Clear Logs</button>
         </div>
       </div>
     `;
@@ -98,7 +98,7 @@ window.BioUI = class BioUI {
 
   populateDropdown() {
     this.modelSelect.innerHTML = "";
-    for (const [key, model] of Object.entries(window.BioModelConfig.MODELS)) {
+    for (const [key, model] of Object.entries(window.BioConfig.modelRegistry)) {
       const option = document.createElement("option");
       option.value = key;
       option.text = `${model.name} v${model.version}`;
@@ -125,7 +125,7 @@ window.BioUI = class BioUI {
     // Run Analysis Button
     this.runBtn.addEventListener("click", () => {
       const selectedKey = this.modelSelect.value;
-      const modelConfig = window.BioModelConfig.MODELS[selectedKey];
+      const modelConfig = window.BioConfig.modelRegistry[selectedKey];
       this.onRunCallback(modelConfig);
     });
 
@@ -141,7 +141,7 @@ window.BioUI = class BioUI {
       try {
         const customJson = JSON.parse(this.customModelInput.value);
         const key = "custom_" + Date.now();
-        window.BioModelConfig.MODELS[key] = customJson;
+        window.BioConfig.modelRegistry[key] = customJson;
         
         this.populateDropdown();
         this.modelSelect.value = key;
@@ -158,14 +158,14 @@ window.BioUI = class BioUI {
     const confVal = document.getElementById("bio-conf-val");
     
     // 1. Set initial slider position based on the default config
-    confSlider.value = window.BioModelConfig.confidenceThreshold;
+    confSlider.value = window.BioConfig.confidenceThreshold;
     confVal.innerText = parseFloat(confSlider.value).toFixed(2);
 
     // 2. Listen for drags and update the config live
     confSlider.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       confVal.innerText = val.toFixed(2);
-      window.BioModelConfig.confidenceThreshold = val;
+      window.BioConfig.confidenceThreshold = val;
     });
 
     // --- Overlap Slider Logic ---
@@ -174,14 +174,14 @@ window.BioUI = class BioUI {
 
     // 1. Set initial slider position
     // (Assuming your audio.js expects overlap as a whole number like 0 to 90)
-    overlapSlider.value = window.BioModelConfig.overlapPercentage;
+    overlapSlider.value = window.BioConfig.overlapPercentage;
     overlapVal.innerText = overlapSlider.value + "%";
 
     // 2. Listen for drags
     overlapSlider.addEventListener("input", (e) => {
       const val = parseInt(e.target.value, 10);
       overlapVal.innerText = val + "%";
-      window.BioModelConfig.overlapPercentage = val / 100;
+      window.BioConfig.overlapPercentage = val / 100;
     });
   }
 

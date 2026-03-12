@@ -31,7 +31,6 @@ window.BioGeo = {
   // 2. Fetch GBIF Data / Bounding Box
   async getSpeciesBBox(speciesName) {
     
-    
     try {
 
       // First, match the species name to a GBIF usage key

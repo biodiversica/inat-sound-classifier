@@ -4,7 +4,9 @@
   "version": "0.1",
   "permissions": [
     "scripting",
-    "tabs"
+    "tabs",
+    "unlimitedStorage",
+    "storage"
   ],
   "host_permissions": [
     "https://api.inaturalist.org/*",

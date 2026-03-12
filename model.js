@@ -1,3 +1,4 @@
+// model.js
 window.BioModelEngine = class BioModelEngine {
   constructor(ui) {
     this.ui = ui;
@@ -10,11 +11,13 @@ window.BioModelEngine = class BioModelEngine {
     const cache = await caches.open("bioacoustic-models-v1");
     let response = await cache.match(url);
     if (!response) {
-      this.ui.log(`Network download (saving to cache): ${url.split('/').pop()}`);
+      this.ui.log(`Not found in cache: ${url.split('/').pop()}`);
+      this.ui.log(`Downloading...`)
       response = await fetch(url);
       if (response.ok) await cache.put(url, response.clone());
+      this.ui.log(`Saved to cache: ${url.split('/').pop()}`)
     } else {
-      this.ui.log(`Loaded from local cache: ${url.split('/').pop()}`);
+      this.ui.log(`Loaded from cache: ${url.split('/').pop()}`);
     }
     return type === "arrayBuffer" ? await response.arrayBuffer() : await response.text();
   }
@@ -36,7 +39,7 @@ window.BioModelEngine = class BioModelEngine {
     this.ui.log(`- Input index: ${modelConfig.inputIndex}`);
     this.ui.log(`- Output index: ${modelConfig.outputIndex}`);
     this.ui.log(`- Using softmax: ${modelConfig.softmax}`);
-    this.ui.log(`- Sources: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model url</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels url</u></a>`);
+    this.ui.log(`- Sources: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
 
 
     // Fetch model buffer and labels using Cache

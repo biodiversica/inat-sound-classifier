@@ -1,5 +1,6 @@
-window.BioModelConfig = {
-  MODELS: {
+// config.js
+window.BioConfig = {
+  modelRegistry: {
     birdnet: {
       name: "BirdNET",
       version: 2.4,
@@ -28,7 +29,10 @@ window.BioModelConfig = {
     }
   },
   overlapPercentage: 0,
-  confidenceThreshold: 0.5
+  confidenceThreshold: 0.5,
+  timeCellWidth: 15,
+  speciesCellWidth: 32,
+  confidenceCellWidth: 12
 };
 
 // Point ORT to WASM folder

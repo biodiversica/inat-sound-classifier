@@ -5,19 +5,20 @@ window.BioModelEngine = class BioModelEngine {
     this.session = null;
     this.labels = [];
     this.currentModelConfig = null;
+    this.currentLanguageConfig = null;
   }
 
   async fetchWithCache(url, type = "arrayBuffer") {
     const cache = await caches.open("bioacoustic-models-v1");
     let response = await cache.match(url);
     if (!response) {
-      this.ui.log(`Not found in cache: ${url.split('/').pop()}`);
-      this.ui.log(`Downloading...`)
+      this.ui.log(`${this.ui.uiInputText.modelNotfound}: ${url.split('/').pop()}`);
+      this.ui.log(`${this.ui.uiInputText.downloadingModel}...`)
       response = await fetch(url);
       if (response.ok) await cache.put(url, response.clone());
-      this.ui.log(`Saved to cache: ${url.split('/').pop()}`)
+      this.ui.log(`${this.ui.uiInputText.savedModel}: ${url.split('/').pop()}`)
     } else {
-      this.ui.log(`Loaded from cache: ${url.split('/').pop()}`);
+      this.ui.log(`${this.ui.uiInputText.loadedModel}: ${url.split('/').pop()}`);
     }
     return type === "arrayBuffer" ? await response.arrayBuffer() : await response.text();
   }
@@ -30,16 +31,16 @@ window.BioModelEngine = class BioModelEngine {
     }
 
     this.currentModelConfig = modelConfig;
-    this.ui.log(`<span class="bio-line-header">Preparing model session...</span>`);
+    this.ui.log(`<span class="bio-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
 
     // Print model config
-    this.ui.log(`<b>Selected model: ${modelConfig.name} v${modelConfig.version}</b>`);
-    this.ui.log(`- Duration of analysis window: ${modelConfig.windowSize}s`);
-    this.ui.log(`- Sample rate: ${modelConfig.sampleRate}Hz`);
-    this.ui.log(`- Input index: ${modelConfig.inputIndex}`);
-    this.ui.log(`- Output index: ${modelConfig.outputIndex}`);
-    this.ui.log(`- Using softmax: ${modelConfig.softmax}`);
-    this.ui.log(`- Sources: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
+    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}: ${modelConfig.name} v${modelConfig.version}</b>`);
+    this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${modelConfig.windowSize}s`);
+    this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
+    this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
+    this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
+    this.ui.log(`- ${this.ui.uiInputText.usingSoftmax}: ${modelConfig.softmax}`);
+    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
 
 
     // Fetch model buffer and labels using Cache
@@ -48,7 +49,7 @@ window.BioModelEngine = class BioModelEngine {
     
     this.labels = labelsText.trim().split("\n");
     this.session = await ort.InferenceSession.create(modelBuffer, { executionProviders: ["wasm"] });
-    this.ui.log("<b>Model successfully loaded to memory</b>");
+    this.ui.log(`<b>${this.ui.uiInputText.loadingSuccess}</b>`);
   }
 
   sigmoid(x) { return 1 / (1 + Math.exp(-x)); }

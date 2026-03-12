@@ -65,6 +65,20 @@
   background: #44bc82;
 }
 
+#bio-language-select {
+  background: #118b50;
+  color: #fcfee5ff;
+  border: 1px solid #111;
+  padding: 2px;
+  outline: none;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-language-select:hover {
+  background: #44bc82;
+}
+
 #bio-run-btn {
   background: rgb(0, 123, 176) ;
   color: #fcfee5ff;
@@ -132,7 +146,7 @@
 
 #bio-custom-model {
   width: 100%;
-  height: 80px;
+  height: 40px;
   background: #fcfee5ff;
   margin-top: 5px;
   font-size: 10px;
@@ -181,7 +195,13 @@
 }
 .bio-link-taxa { 
     background: #c00160 !important; 
-    color: white; 
+    color: #fcfee5ff; 
+    text-decoration: underline; 
+    font-style: italic; 
+}
+.bio-link-taxa-soft { 
+    background: #44bc82 !important; 
+    color: #fcfee5ff; 
     text-decoration: underline; 
     font-style: italic; 
 }
@@ -197,14 +217,14 @@
     background: #118b50 !important; 
 }
 .bio-geo-mismatch { 
-    color: red !important; 
+    color: #c00160 !important; 
 }
 .bio-geo-warning { 
-    background: red; 
+    background: #c00160; 
     color: #fcfee5ff !important; 
 }
 .bio-error { 
-    color: #f55 !important; 
+    color: #c00160 !important; 
 }
 .bio-separator { 
     border-top: 1px dashed #444; 

@@ -1,23 +1,28 @@
 // ui.js
 window.BioUI = class BioUI {
-  constructor(onRunCallback) {
+  constructor(onRunCallback, uiInputText, triggerRebuild) {
     this.onRunCallback = onRunCallback;
+    this.uiInputText = uiInputText;
+    this.triggerRebuild = triggerRebuild;
     
-    // 1. Inject the HTML skeleton
-    this.injectPanel();
+
+    // Inject the HTML skeleton
+    this.injectPanel(this.uiInputText);
     
-    // 2. Cache DOM elements for easy access later
+    // Cache DOM elements for easy access later
     this.panel = document.getElementById("bio-model-panel");
     this.content = document.getElementById("bio-content-wrapper");
     this.toggleBtn = document.getElementById("bio-toggle-btn");
     this.logArea = document.getElementById("bio-log-area");
     this.modelSelect = document.getElementById("bio-model-select");
+    this.languageSelect = document.getElementById("bio-language-select");
     this.runBtn = document.getElementById("bio-run-btn");
     this.customModelInput = document.getElementById("bio-custom-model");
     this.addCustomBtn = document.getElementById("bio-add-custom-btn");
     
-    // 3. Setup initial state
+    // Setup initial state
     this.populateDropdown();
+    this.populateLanguageDropdown();
     this.setupEventListeners();
   }
 
@@ -32,9 +37,9 @@ window.BioUI = class BioUI {
 
   // Helper to print a table header
   printTableHeader(timeWidth, speciesWidth, confidenceWidth, tableClass) {
-    const col1 = this.pad("Time Window", timeWidth);
-    const col2 = this.pad("Species", speciesWidth);
-    const col3 = this.pad("Confidence", confidenceWidth);
+    const col1 = this.pad(this.uiInputText.timeCell, timeWidth);
+    const col2 = this.pad(this.uiInputText.speciesCell, speciesWidth);
+    const col3 = this.pad(this.uiInputText.confidenceCell, confidenceWidth);
     
     this.log(`<b class=${tableClass}>${col1} | ${col2} | ${col3}</b>`);
   }
@@ -46,7 +51,7 @@ window.BioUI = class BioUI {
     }
   }
 
-  injectPanel() {
+  injectPanel(inputText) {
     // Prevent duplicate panels if the script runs twice
     if (document.getElementById("bio-model-panel")) return;
 
@@ -55,40 +60,45 @@ window.BioUI = class BioUI {
     
     panelDiv.innerHTML = `
       <div id="bio-header">
-        <b>iNaturalist Sound Classifier</b>
+        <b>${inputText.extensionName}</b>
         <span id="bio-toggle-btn">−</span>
       </div>
       
       <div id="bio-content-wrapper">
         <div class="bio-controls-row">
           <div>
-            <span class="bio-help" data-tooltip="Bioacoustic models are selected based on the taxa they are able to classify. Some models are available in the registry and the user can also add custom models in the advanced settings section below."><b>Bioacoustic Model:</b></span>
+            <span class="bio-help" data-tooltip="${inputText.bioacousticModelHelp}"><b>${inputText.bioacousticModel}</b></span>
             <select id="bio-model-select"></select>
-            <button id="bio-run-btn">Run Analysis</button>
-            
+            <button id="bio-run-btn">${inputText.analysisButton}</button>
           </div>
         </div>
         
         <details>
-          <summary class="bio-custom-summary">+ Advanced settings</summary>
+          <summary class="bio-custom-summary">${inputText.advancedSettings}</summary>
           <div id="bio-settings-panel">
             <div class="bio-setting-row">
-              <label class="bio-help" data-tooltip="This parameter relates to the output score of the model which ranges between 0 and 1. Any detection with score below this threshold is ignored.">Confidence Threshold: <span id="bio-conf-val"></span></label>
+              <label class="bio-help" data-tooltip="${inputText.confidenceHelp}">${inputText.confidence}<span id="bio-conf-val"></span></label>
               <input type="range" id="bio-conf-slider" min="0.05" max="0.95" step="0.05">
             </div>
             <div class="bio-setting-row">
-              <label class="bio-help" data-tooltip="This parameter corresponds to the percentage of overlap between analysis windows within the observation sound. Each model has its own specific analysis window duration.">Overlap: <span id="bio-overlap-val"></span></label>
+              <label class="bio-help" data-tooltip="${inputText.overlapHelp}">${inputText.overlap}<span id="bio-overlap-val"></span></label>
               <input type="range" id="bio-overlap-slider" min="0" max="90" step="10">
             </div>
+            <div class="bio-setting-row">
+              <span class="bio-help" data-tooltip="${inputText.setLanguageHelp}">${inputText.setLanguage}</span>
+              <select id="bio-language-select"></select>
+            </div>
+
+            <text class="bio-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModel}</text>
+            <textarea id="bio-custom-model" placeholder='{"name": "Custom", "version": 1.0, ...}'></textarea>
+            <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
           </div>
-          <text class="bio-help" data-tooltip="The user is able to add a custom model by providing all model properties following the JSON format below."><b>Add custom model (JSON):</b> </text>
-          <textarea id="bio-custom-model" placeholder='{"name": "Custom", "version": 1.0, ...}'></textarea>
-          <button id="bio-add-custom-btn">Add to List</button>
+          
         </details>
         
         <div id="bio-log-area"></div>
         <div class="bio-bottom-controls"> 
-          <button id="bio-clear-btn">Clear Logs</button>
+          <button id="bio-clear-btn">${inputText.clearLogsButton}</button>
         </div>
       </div>
     `;
@@ -103,6 +113,16 @@ window.BioUI = class BioUI {
       option.value = key;
       option.text = `${model.name} v${model.version}`;
       this.modelSelect.appendChild(option);
+    }
+  }
+
+  populateLanguageDropdown() {
+    this.languageSelect.innerHTML = "";
+    for (const [key, language] of Object.entries(window.BioConfig.uiText)) {
+      const option = document.createElement("option");
+      option.value = key;
+      option.text = `${language.language}`;
+      this.languageSelect.appendChild(option);
     }
   }
 
@@ -122,18 +142,44 @@ window.BioUI = class BioUI {
       }
     });
 
+    // Ensure the dropdown displays the currently active language
+    this.languageSelect.value = localStorage.getItem('bio-language') || 'en';
+
+    // Listen for the user changing the language
+    this.languageSelect.addEventListener("change", (e) => {
+      const newLangKey = e.target.value;
+      
+      // Save the new choice to the browser
+      localStorage.setItem('bio-language', newLangKey);
+
+      // --- THE "SOFT RESET" TRICK ---
+      // Physically remove the UI from the webpage
+      if (this.panel) this.panel.remove(); 
+      
+      // Reset the global variables in content.js 
+      // (Assuming these are globally accessible. If they are in a module, 
+      // you might need to pass a "reset" callback to your UI class)
+      this.triggerRebuild();
+      
+      // Now, within 1 to 2 seconds, your existing setInterval will say 
+      // "Hey, there's no UI here!" and trigger init() again, 
+      // reading the new language from localStorage!
+    });
+
     // Run Analysis Button
     this.runBtn.addEventListener("click", () => {
       const selectedKey = this.modelSelect.value;
       const modelConfig = window.BioConfig.modelRegistry[selectedKey];
-      this.onRunCallback(modelConfig);
+      const selectedLanguageKey = this.languageSelect.value;
+      const languageConfig = window.BioConfig.uiText[selectedLanguageKey];
+      this.onRunCallback(modelConfig, languageConfig);
     });
 
     // Clear Logs Button
     const clearBtn = document.getElementById("bio-clear-btn");
     clearBtn.addEventListener("click", () => {
       this.clearLog();
-      this.log("Select a model and press <b>'Run Analysis'</b>");
+      this.log(`${this.uiInputText.initLog} <b>'${this.uiInputText.analysisButton}'</b>`);
     });
 
     // Add Custom Model Button
@@ -157,11 +203,11 @@ window.BioUI = class BioUI {
     const confSlider = document.getElementById("bio-conf-slider");
     const confVal = document.getElementById("bio-conf-val");
     
-    // 1. Set initial slider position based on the default config
+    // Set initial slider position based on the default config
     confSlider.value = window.BioConfig.confidenceThreshold;
     confVal.innerText = parseFloat(confSlider.value).toFixed(2);
 
-    // 2. Listen for drags and update the config live
+    // Listen for drags and update the config live
     confSlider.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       confVal.innerText = val.toFixed(2);
@@ -172,12 +218,11 @@ window.BioUI = class BioUI {
     const overlapSlider = document.getElementById("bio-overlap-slider");
     const overlapVal = document.getElementById("bio-overlap-val");
 
-    // 1. Set initial slider position
-    // (Assuming your audio.js expects overlap as a whole number like 0 to 90)
+    // Set initial slider position
     overlapSlider.value = window.BioConfig.overlapPercentage;
     overlapVal.innerText = overlapSlider.value + "%";
 
-    // 2. Listen for drags
+    // Listen for drags
     overlapSlider.addEventListener("input", (e) => {
       const val = parseInt(e.target.value, 10);
       overlapVal.innerText = val + "%";
@@ -188,16 +233,16 @@ window.BioUI = class BioUI {
   log(msg) {
     if (!this.logArea) return;
 
-    // 1. Calculate how far from the bottom the user is (50px buffer)
+    // Calculate how far from the bottom the user is (50px buffer)
     const isAtBottom = (this.logArea.scrollHeight - this.logArea.scrollTop) <= (this.logArea.clientHeight + 50);
 
-    // 2. Append the message using the CSS class
+    // Append the message using the CSS class
     const div = document.createElement("div");
     div.className = "bio-log-entry";
     div.innerHTML = msg;
     this.logArea.appendChild(div);
 
-    // 3. Auto-scroll logic
+    // Auto-scroll logic
     if (isAtBottom) {
       setTimeout(() => {
         this.logArea.scrollTo({

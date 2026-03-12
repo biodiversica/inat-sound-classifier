@@ -19,7 +19,7 @@ window.BioAudio = {
   },
 
   async decodeAudio(url) {
-    // 1. Ask background.js to fetch the file
+    // Ask background.js to fetch the file
     const response = await new Promise(resolve => {
       chrome.runtime.sendMessage({ type: "FETCH_AUDIO", url: url }, resolve);
     });
@@ -28,7 +28,7 @@ window.BioAudio = {
       throw new Error("Background fetch failed: " + response.error);
     }
 
-    // 2. Convert the Base64 string back into an ArrayBuffer
+    // Convert the Base64 string back into an ArrayBuffer
     const binaryString = atob(response.data);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
@@ -37,11 +37,11 @@ window.BioAudio = {
     }
     const arrayBuffer = bytes.buffer;
 
-    // 3. Decode the audio
+    // Decode the audio
     const ctx = new AudioContext();
     const decoded = await ctx.decodeAudioData(arrayBuffer);
     
-    // Always close the AudioContext when done to free up memory!
+    // Close the AudioContext when done to free up memory
     await ctx.close(); 
     return decoded;
   },

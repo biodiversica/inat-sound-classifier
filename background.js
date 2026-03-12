@@ -2,7 +2,7 @@
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
-  // 1. Handle Audio Fetching
+  // Handle Audio Fetching
   if (request.type === "FETCH_AUDIO") {
     fetchAudioAsBase64(request.url)
       .then(base64 => sendResponse({ success: true, data: base64 }))
@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Keeps the message channel open for the async fetch
   }
 
-  // 2. Handle API Fetching (e.g., GBIF Bounding Boxes)
+  // Handle API Fetching (e.g., GBIF Bounding Boxes)
   if (request.type === "FETCH_JSON") {
     fetch(request.url)
       .then(res => {

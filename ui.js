@@ -19,6 +19,7 @@ window.BioUI = class BioUI {
     this.runBtn = document.getElementById("bio-run-btn");
     this.customModelInput = document.getElementById("bio-custom-model");
     this.addCustomBtn = document.getElementById("bio-add-custom-btn");
+    this.exportBtn = document.getElementById("bio-export-btn");
     
     // Setup initial state
     this.populateDropdown();
@@ -98,6 +99,7 @@ window.BioUI = class BioUI {
         
         <div id="bio-log-area"></div>
         <div class="bio-bottom-controls"> 
+          <button id="bio-export-btn">${inputText.exportButton}</button>
           <button id="bio-clear-btn">${inputText.clearLogsButton}</button>
         </div>
       </div>
@@ -182,6 +184,11 @@ window.BioUI = class BioUI {
       this.log(`${this.uiInputText.initLog} <b>'${this.uiInputText.analysisButton}'</b>`);
     });
 
+    // Export CSV Button
+    this.exportBtn.addEventListener("click", () => {
+      this.exportDetections();
+    });
+
     // Add Custom Model Button
     this.addCustomBtn.addEventListener("click", () => {
       try {
@@ -251,5 +258,25 @@ window.BioUI = class BioUI {
         });
       }, 10);
     }
+  }
+
+  exportDetections() {
+    if (!window.lastAnalysisData) {
+      this.log(`${this.uiInputText.noDetectionsToExport}`);
+      return;
+    }
+    const { detections, obsId, modelName } = window.lastAnalysisData;
+    const csv = "start_time,end_time,species,confidence\n" + detections.map(d => {
+      const [start, end] = d.timeRange.split(' - ').map(t => t.replace('s', ''));
+      return `${start},${end},${d.speciesName},${d.score}`;
+    }).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${obsId}_${modelName}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.log(`${this.uiInputText.exportMessage} ${obsId}_${modelName}.csv`);
   }
 }

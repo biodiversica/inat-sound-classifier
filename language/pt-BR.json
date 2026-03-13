@@ -1,5 +1,5 @@
 {
-  "id": "pt_BR",
+  "id": "pt-BR",
   "language": "Português (BR)",
   "extensionName": "iNaturalist Sound Classifier",
   "bioacousticModel": "Modelo Bioacústico:",
@@ -14,6 +14,7 @@
   "customModelHelp": "O usuário pode adicionar um modelo personalizado fornecendo todas as propriedades do modelo seguindo o formato JSON abaixo.",
   "addCustomButton": "Adicionar à Lista",
   "clearLogsButton": "Limpar Console",
+  "exportButton": "Exportar Resultados",
   "setLanguage": "Idioma:",
   "setLanguageHelp": "Selecione um idioma para a extensão. Essa configuração será salva no cache do navegador.",
   "initLog": "Selecione um modelo e clique em",
@@ -43,5 +44,7 @@
   "modelNotFound": "Arquivo não encontrado na cache",
   "downloadingModel": "Baixando",
   "savedModel": "Salvo na cache",
-  "loadedModel": "Arquivo encontrado na cache"
+  "loadedModel": "Arquivo encontrado na cache",
+  "noDetectionsToExport": "Não existem resultados para serem exportados.",
+  "exportMessage": "Resultados exportados como:"
 }

@@ -111,6 +111,23 @@
   background: #44bc82;
 }
 
+#bio-export-btn {
+  background: rgb(0, 123, 176) ;
+  color: #fcfee5ff;
+  border: 1px solid #444; /* Dimmer border */
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 3px 8px;
+  margin-right: 5px;
+}
+
+#bio-export-btn:hover {
+  background: #44bc82;
+  border-color: #118b50;
+}
+
 #bio-settings-panel {
   border: 1px dashed #118b50;
   padding: 8px;

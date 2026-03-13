@@ -6,7 +6,8 @@ window.BioConfig = {
   confidenceThreshold: 0.5,
   timeCellWidth: 15,
   speciesCellWidth: 32,
-  confidenceCellWidth: 12
+  confidenceCellWidth: 12,
+  dynamicPageInterval: 2000
 };
 
 // Point ORT to WASM folder

@@ -14,6 +14,7 @@
   "customModelHelp": "The user is able to add a custom model by providing all model properties following the JSON format below.",
   "addCustomButton": "Add to List",
   "clearLogsButton": "Clear Logs",
+  "exportButton": "Export Results",
   "setLanguage": "Language:",
   "setLanguageHelp": "Select a language for the extension. This configuration will be saved in cache",
   "initLog": "Select a model and press",
@@ -43,5 +44,7 @@
   "modelNotFound": "Not found in cache",
   "downloadingModel": "Downloading",
   "savedModel": "Saved to cache",
-  "loadedModel": "Loaded from cache"
+  "loadedModel": "Loaded from cache",
+  "noDetectionsToExport": "No analysis data to export.",
+  "exportMessage": "Detections exported as:"
 }

@@ -65,10 +65,10 @@
           window.BioConfig.modelRegistry[modelData.id] = modelData;
         }
       }
-      console.log("Valid models for this location:", Object.keys(window.BioConfig.modelRegistry));
+      console.log("[iNaturalist Sound Classifier] Valid models for this location:", Object.keys(window.BioConfig.modelRegistry));
 
     } catch (error) {
-      console.error("Failed to load model registry:", error);
+      console.error("[iNaturalist Sound Classifier] Failed to load model registry:", error);
     }
   }
 
@@ -88,7 +88,7 @@
         window.BioConfig.uiText[languageData.id] = languageData;
       }
     } catch (error) {
-      console.error("Failed to load language options:", error);
+      console.error("[iNaturalist Sound Classifier] Failed to load language options:", error);
     }
   }
 
@@ -142,6 +142,9 @@
 
         soundFileIndex += 1;
       }
+
+      // Store data for export
+      window.lastAnalysisData = { detections, obsId, modelName: modelConfig.name };
 
       if (detections.length > 0) {
         ui.log(`<span class="bio-line-header">${languageConfig.validatingDetection}...</span>`);
@@ -222,7 +225,7 @@
       
       // IF the registry is empty (no models cover this area)
       if (Object.keys(window.BioConfig.modelRegistry).length === 0) {
-        console.log("No models available for this geographic region.");
+        console.log("[iNaturalist Sound Classifier] No models available for this geographic region.");
         return; 
       }
 
@@ -253,7 +256,7 @@
       const uiInputText = window.BioConfig.uiText[targetLang] || window.BioConfig.uiText['en'];
 
       if (!uiInputText) {
-        console.error("Language initialization failed. Fallback to English.");
+        console.error("[iNaturalist Sound Classifier] Language initialization failed. Fallback to English.");
         return;
       }
 
@@ -277,6 +280,6 @@
   }
 
   // Handle iNaturalist's dynamic page transitions
-  setInterval(init, 2000);
+  setInterval(init, window.BioConfig.dynamicPageInterval);
   init();
 })();

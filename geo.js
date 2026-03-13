@@ -1,6 +1,7 @@
 // geo.js 
 window.BioGeo = {
-  
+  cache: {},
+
   // Helper to abstract the messaging boilerplate
   async fetchViaBackground(url) {
     const response = await new Promise(resolve => {
@@ -30,39 +31,50 @@ window.BioGeo = {
 
   // 2. Fetch GBIF Data / Bounding Box
   async getSpeciesBBox(speciesName) {
+    if (this.cache[speciesName]) return this.cache[speciesName];
     
     try {
-
       // First, match the species name to a GBIF usage key
       const matchUrl = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(speciesName)}`;
       const matchData = await this.fetchViaBackground(matchUrl);
-      // const match = await matchData.json();
       
-      if (!matchData || !matchData.usageKey) return null;
+      if (!matchData || !matchData.usageKey) {
+        this.cache[speciesName] = null;
+        return null;
+      }
       
       const usageKey = matchData.usageKey;
       
-      // Fetching a summary or map geometry from GBIF
-      const bboxUrl = `https://api.gbif.org/v1/occurrence/search?taxonKey=${usageKey}&hasCoordinate=true&limit=300`
+      // Fetching a summary or map geometry from GBIF (reduced limit for speed)
+      const bboxUrl = `https://api.gbif.org/v1/occurrence/search?taxonKey=${usageKey}&hasCoordinate=true&limit=100`;
       const occ = await this.fetchViaBackground(bboxUrl);
 
-      
-      if (!occ.results || occ.results.length === 0) return null;
+      if (!occ.results || occ.results.length === 0) {
+        this.cache[speciesName] = null;
+        return null;
+      }
 
       // Extract valid coordinates
       const lats = occ.results.map(o => o.decimalLatitude).filter(v => v != null);
       const lons = occ.results.map(o => o.decimalLongitude).filter(v => v != null);
 
-      if (lats.length === 0) return null;
+      if (lats.length === 0) {
+        this.cache[speciesName] = null;
+        return null;
+      }
 
-      return {
+      const bbox = {
         minLat: Math.min(...lats),
         maxLat: Math.max(...lats),
         minLon: Math.min(...lons),
         maxLon: Math.max(...lons)
       };
+      
+      this.cache[speciesName] = bbox;
+      return bbox;
     } catch (e) {
       console.error("GBIF fetch error:", e);
+      this.cache[speciesName] = null;
       return null;
     }
   },

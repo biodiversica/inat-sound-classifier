@@ -209,7 +209,7 @@
       // Dynamically build the registry based on location
       await loadGeographicModelRegistry();
       
-      // IF the registry is empty (no models cover this area), handle it gracefully
+      // IF the registry is empty (no models cover this area)
       if (Object.keys(window.BioConfig.modelRegistry).length === 0) {
         console.log("No models available for this geographic region.");
         return; 
@@ -218,12 +218,32 @@
       // Load language options
       await loadLanguageOptions();
 
-      const savedLang = localStorage.getItem('bio-language') || 'en';
-      const uiInputText = window.BioConfig.uiText[savedLang] || window.BioConfig.uiText['en']; // Fallback to en
+      // Get the list of IDs we actually have files for (e.g., ['en', 'pt_BR'])
+      const availableLangs = Object.keys(window.BioConfig.uiText);
+
+      // Determine the target language key
+      // Priority: 1. Manual Save | 2. Browser Language | 3. English
+      let targetLang = localStorage.getItem('bio-language');
+
+      if (!targetLang) {
+        const browserLang = navigator.language; //.replace('-', '_');
+        
+        // Check if we have an exact match (pt-BR) or a partial match (en)
+        if (availableLangs.includes(browserLang)) {
+          targetLang = browserLang;
+        } else {
+          // Check if the short version exists (e.g., if browser is 'en-GB', check 'en')
+          const shortLang = browserLang.split('_')[0];
+          targetLang = availableLangs.includes(shortLang) ? shortLang : 'en';
+        }
+      }
+
+      // Fetch language dictionary
+      const uiInputText = window.BioConfig.uiText[targetLang] || window.BioConfig.uiText['en'];
 
       if (!uiInputText) {
-        console.error("Language data not found for:", savedLang);
-        return; 
+        console.error("Language initialization failed. Fallback to English.");
+        return;
       }
 
       // Handle the "Audio Found" scenario

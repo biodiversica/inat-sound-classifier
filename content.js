@@ -107,14 +107,13 @@
       if (!engine) engine = new window.BioModelEngine(ui);
       await engine.loadModel(modelConfig);
 
+      let detections = [];
       let soundFileIndex = 1;
       for (const url of urls) {
         ui.log(`<span class="bio-line-header">${languageConfig.analyzingSound} ${soundFileIndex}...</span>`);
         const decoded = await window.BioAudio.decodeAudio(url);
         const samples = await window.BioAudio.resample(decoded, modelConfig.sampleRate);
         const chunks = window.BioAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.BioConfig.overlapPercentage);
-
-        let best = { range:null, name: null, score: 0 };
 
         ui.printTableHeader(window.BioConfig.timeCellWidth, window.BioConfig.speciesCellWidth, window.BioConfig.confidenceCellWidth, "bio-header");
 
@@ -137,38 +136,50 @@
             // Log the formatted row
             ui.log(`${col1} | <a href="${taxaUrl}" target="_blank" class="bio-link-taxa-soft"><u><i>${col2}</i></u></a> | ${col3}`);
 
-            if (res.score > best.score) best = { range: timeRange, name: speciesName, score: res.score };
+            detections.push({ timeRange, speciesName, score: res.score });
           }
         }
 
-        if (best.name) {
-          const slug = best.name.replace(" ", "_");
-          const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
-          ui.log(`<b>${languageConfig.topDetection}:</b>`);
-          ui.log(`<b>${ui.pad(best.range, window.BioConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(best.name, window.BioConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(best.score.toFixed(2), window.BioConfig.confidenceCellWidth)}</b>`);
-
-          ui.log(`<span class="bio-line-header">${languageConfig.validatingDetection}...</span>`);
-          ui.log(`${languageConfig.checkingGBIF} <i>${best.name}</i>`);
-          const coords = await window.BioGeo.getObservationCoords(obsId);
-          const bbox = await window.BioGeo.getSpeciesBBox(best.name);
-          if (!coords) {
-              ui.log(`<span class='bio-error'>${languageConfig.coordNotFound}</span>`);
-          } else {
-             if (!bbox) {
-               ui.log(`<span class='bio-error'>${languageConfig.fetchGBIFError} ${best.name}.</span>`);
-             } else {
-               const isMatch = window.BioGeo.isWithinBBox(coords, bbox);
-               const cls = isMatch ? "bio-geo-match" : "bio-geo-mismatch";
-               ui.log(`<span class="${cls}">${isMatch ? languageConfig.withinGBIF : languageConfig.outsideGBIF}</span>`);
-             }
-          }
-        } else {
-          ui.log(`${languageConfig.noDetection}`);
-        }
-        ui.log(`<b>${languageConfig.endOfAnalysis}</b>`);
         soundFileIndex += 1;
       }
-    } catch (e) {
+
+      if (detections.length > 0) {
+        ui.log(`<span class="bio-line-header">${languageConfig.validatingDetection}...</span>`);
+        const coords = await window.BioGeo.getObservationCoords(obsId);
+        if (!coords) {
+          ui.log(`<span class='bio-error'>${languageConfig.coordNotFound}</span>`);
+        } else {
+          // Get unique species
+          const uniqueSpecies = [...new Set(detections.map(d => d.speciesName))];
+          ui.log(`${languageConfig.checkingGBIF} ${uniqueSpecies.length} species...`);
+          const bboxes = {};
+          // Fetch bboxes in parallel for better performance
+          const bboxPromises = uniqueSpecies.map(species => window.BioGeo.getSpeciesBBox(species));
+          const bboxesArray = await Promise.all(bboxPromises);
+          uniqueSpecies.forEach((species, i) => {
+            bboxes[species] = bboxesArray[i];
+          });
+
+          const validDetections = detections.filter(d => {
+            const bbox = bboxes[d.speciesName];
+            return bbox && window.BioGeo.isWithinBBox(coords, bbox);
+          });
+
+          if (validDetections.length > 0) {
+            const top = validDetections.reduce((max, d) => d.score > max.score ? d : max);
+            const slug = top.speciesName.replace(" ", "_");
+            const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
+            ui.log(`<b>${languageConfig.topDetection}:</b>`);
+            ui.log(`<b>${ui.pad(top.timeRange, window.BioConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(top.speciesName, window.BioConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(top.score.toFixed(2), window.BioConfig.confidenceCellWidth)}</b>`);
+            ui.log(`<span class="bio-geo-match">${languageConfig.withinGBIF}</span>`);
+          } else {
+            ui.log(`${languageConfig.noDetection}`);
+          }
+        }
+      } else {
+        ui.log(`${languageConfig.noDetection}`);
+      }
+      ui.log(`<b>${languageConfig.endOfAnalysis}</b>`);
       ui.log(`<span class="bio-error">Fail: ${e.message}</span>`);
     } finally {
       ui.runBtn.disabled = false;

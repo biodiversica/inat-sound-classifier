@@ -156,16 +156,19 @@
           const uniqueSpecies = [...new Set(detections.map(d => d.speciesName))];
           ui.log(`${languageConfig.checkingGBIF} ${uniqueSpecies.length} species...`);
           const bboxes = {};
-          // Fetch bboxes in parallel for better performance
-          const bboxPromises = uniqueSpecies.map(species => window.BioGeo.getSpeciesBBox(species));
-          const bboxesArray = await Promise.all(bboxPromises);
+          // Fetch bboxes from both GBIF and iNaturalist in parallel
+          const gbifPromises = uniqueSpecies.map(species => window.BioGeo.getSpeciesBBox(species));
+          const inatPromises = uniqueSpecies.map(species => window.BioGeo.getiNaturalistSpeciesBBox(species));
+          const [gbifArray, inatArray] = await Promise.all([Promise.all(gbifPromises), Promise.all(inatPromises)]);
           uniqueSpecies.forEach((species, i) => {
-            bboxes[species] = bboxesArray[i];
+            bboxes[species] = { gbif: gbifArray[i], inat: inatArray[i] };
           });
 
           const validDetections = detections.filter(d => {
             const bbox = bboxes[d.speciesName];
-            return bbox && window.BioGeo.isWithinBBox(coords, bbox);
+            const gbifValid = bbox.gbif && window.BioGeo.isWithinBBox(coords, bbox.gbif);
+            const inatValid = bbox.inat && window.BioGeo.isWithinBBox(coords, bbox.inat);
+            return gbifValid || inatValid;
           });
 
           if (validDetections.length > 0) {
@@ -174,7 +177,29 @@
             const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
             ui.log(`<b>${languageConfig.topDetection}:</b>`);
             ui.log(`<b>${ui.pad(top.timeRange, window.BioConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(top.speciesName, window.BioConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(top.score.toFixed(2), window.BioConfig.confidenceCellWidth)}</b>`);
-            ui.log(`<span class="bio-geo-match">${languageConfig.withinGBIF}</span>`);
+            
+            // Determine validation status for the top species
+            const bbox = bboxes[top.speciesName];
+            const gbifValid = bbox.gbif && window.BioGeo.isWithinBBox(coords, bbox.gbif);
+            const inatValid = bbox.inat && window.BioGeo.isWithinBBox(coords, bbox.inat);
+            
+            let validationMessage;
+            let messageClass;
+            if (gbifValid && inatValid) {
+              validationMessage = languageConfig.withinBoth;
+              messageClass = "bio-geo-match";
+            } else if (gbifValid) {
+              validationMessage = languageConfig.withinGBIFOnly;
+              messageClass = "bio-geo-match";
+            } else if (inatValid) {
+              validationMessage = languageConfig.withinINatOnly;
+              messageClass = "bio-geo-match";
+            } else {
+              validationMessage = languageConfig.outsideBoth;
+              messageClass = "bio-geo-mismatch";
+            }
+            
+            ui.log(`<span class="${messageClass}">${validationMessage}</span>`);
           } else {
             ui.log(`${languageConfig.noDetection}`);
           }

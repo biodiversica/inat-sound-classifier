@@ -1,6 +1,7 @@
 // geo.js 
 window.BioGeo = {
   cache: {},
+  cacheinat: {},
 
   // Helper to abstract the messaging boilerplate
   async fetchViaBackground(url) {
@@ -75,6 +76,45 @@ window.BioGeo = {
     } catch (e) {
       console.error("GBIF fetch error:", e);
       this.cache[speciesName] = null;
+      return null;
+    }
+  },
+
+  // 3. Fetch iNaturalist Data / Bounding Box
+  async getiNaturalistSpeciesBBox(speciesName) {
+    if (this.cacheinat[speciesName]) return this.cacheinat[speciesName];
+    
+    try {
+      const url = `https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(speciesName)}&has[]=geo&per_page=100`;
+      const data = await this.fetchViaBackground(url);
+      
+      if (!data || !data.results || data.results.length === 0) {
+        this.cacheinat[speciesName] = null;
+        return null;
+      }
+
+      // Extract valid coordinates from location field (format: "lat,lon")
+      const coords = data.results.map(o => o.location ? o.location.split(',').map(Number) : null).filter(c => c && c.length === 2);
+      const lats = coords.map(c => c[0]);
+      const lons = coords.map(c => c[1]);
+
+      if (lats.length === 0) {
+        this.cacheinat[speciesName] = null;
+        return null;
+      }
+
+      const bbox = {
+        minLat: Math.min(...lats),
+        maxLat: Math.max(...lats),
+        minLon: Math.min(...lons),
+        maxLon: Math.max(...lons)
+      };
+      
+      this.cacheinat[speciesName] = bbox;
+      return bbox;
+    } catch (e) {
+      console.error("iNaturalist fetch error:", e);
+      this.cacheinat[speciesName] = null;
       return null;
     }
   },

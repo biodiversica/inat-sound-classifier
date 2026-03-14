@@ -40,7 +40,7 @@
   "sources": "Fontes",
   "preparingModel": "Preparando modelo para análise",
   "loadingSuccess": "Modelo carregado com sucesso na memória.",
-  "modelNotFound": "Arquivo não encontrado na cache",
+  "notFoundInCache": "Arquivo não encontrado na cache",
   "downloadingModel": "Baixando",
   "savedModel": "Salvo na cache",
   "loadedModel": "Arquivo encontrado na cache",

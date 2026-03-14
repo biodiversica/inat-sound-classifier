@@ -40,7 +40,7 @@
   "sources": "Sources",
   "preparingModel": "Preparing model session",
   "loadingSuccess": "Model successfully loaded to memory",
-  "modelNotFound": "Not found in cache",
+  "notFoundInCache": "Not found in cache",
   "downloadingModel": "Downloading",
   "savedModel": "Saved to cache",
   "loadedModel": "Loaded from cache",

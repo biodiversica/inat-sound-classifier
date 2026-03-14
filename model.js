@@ -12,15 +12,52 @@ window.BioModelEngine = class BioModelEngine {
     const cache = await caches.open(window.BioConfig.modelCacheLabel);
     let response = await cache.match(url);
     if (!response) {
-      this.ui.log(`${this.ui.uiInputText.modelNotfound}: ${url.split('/').pop()}`);
-      this.ui.log(`${this.ui.uiInputText.downloadingModel}...`)
+      this.ui.log(`${this.ui.uiInputText.notFoundInCache}: ${url.split('/').pop()}`);
+      this.ui.log(`${this.ui.uiInputText.downloadingModel}... 0%`, "download-progress");
       response = await fetch(url);
-      if (response.ok) await cache.put(url, response.clone());
-      this.ui.log(`${this.ui.uiInputText.savedModel}: ${url.split('/').pop()}`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : null;
+      const reader = response.body.getReader();
+      const chunks = [];
+      let loaded = 0;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        if (total) {
+          const percent = Math.round((loaded / total) * 100);
+          this.ui.log(`${this.ui.uiInputText.downloadingModel}... ${percent}%`, "download-progress");
+        }
+      }
+      
+      // Combine chunks
+      const uint8Array = new Uint8Array(loaded);
+      let offset = 0;
+      for (const chunk of chunks) {
+        uint8Array.set(chunk, offset);
+        offset += chunk.length;
+      }
+      
+      // Create response for caching
+      const cachedResponse = new Response(uint8Array);
+      await cache.put(url, cachedResponse);
+      
+      this.ui.log(`${this.ui.uiInputText.savedModel}: ${url.split('/').pop()}`);
+      
+      // Return the data
+      if (type === "arrayBuffer") {
+        return uint8Array.buffer;
+      } else {
+        return new TextDecoder().decode(uint8Array);
+      }
     } else {
       this.ui.log(`${this.ui.uiInputText.loadedModel}: ${url.split('/').pop()}`);
+      return type === "arrayBuffer" ? await response.arrayBuffer() : await response.text();
     }
-    return type === "arrayBuffer" ? await response.arrayBuffer() : await response.text();
   }
 
   async loadModel(modelConfig) {

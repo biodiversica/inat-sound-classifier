@@ -258,8 +258,16 @@ window.BioUI = class BioUI {
     });
   }
 
-  log(msg) {
+  log(msg, updateId = null) {
     if (!this.logArea) return;
+
+    if (updateId) {
+      const existing = document.getElementById(updateId);
+      if (existing) {
+        existing.innerHTML = msg;
+        return;
+      }
+    }
 
     // Calculate how far from the bottom the user is (50px buffer)
     const isAtBottom = (this.logArea.scrollHeight - this.logArea.scrollTop) <= (this.logArea.clientHeight + 50);
@@ -267,6 +275,7 @@ window.BioUI = class BioUI {
     // Append the message using the CSS class
     const div = document.createElement("div");
     div.className = "bio-log-entry";
+    if (updateId) div.id = updateId;
     div.innerHTML = msg;
     this.logArea.appendChild(div);
 

@@ -10,7 +10,6 @@
   "confidenceHelp": "Este parâmetro relaciona-se com a pontuação de saída do modelo, que varia entre 0 e 1. Qualquer detecção com pontuação abaixo desse mínimo é ignorada.",
   "overlap": "Overlap: ",
   "overlapHelp": "Este parâmetro corresponde à porcentagem de sobreposição entre as janelas temporais de análise dentro da observação sonora.",
-  "customModel": "Adicione um modelo customizado (JSON):",
   "customModelHelp": "O usuário pode adicionar um modelo personalizado fornecendo todas as propriedades do modelo seguindo o formato JSON abaixo.",
   "addCustomButton": "Adicionar à Lista",
   "clearLogsButton": "Limpar Console",
@@ -24,7 +23,7 @@
   "speciesCell": "Espécie",
   "confidenceCell": "Confiança",
   "topDetection": "Melhor detecção",
-  "validatingDetection": "Validação da localização da espécie com melhor detecção",
+  "validatingDetection": "Validação da localização das espécies detectadas",
   "checkingGBIF": "Verificando as coordenadas no GBIF para",
   "coordNotFound": "Não foi possível encontrar as coordenadas para esta observação.",
   "fetchGBIFError": "Não foi possível obter informações no GBIF para",
@@ -46,5 +45,10 @@
   "savedModel": "Salvo na cache",
   "loadedModel": "Arquivo encontrado na cache",
   "noDetectionsToExport": "Não existem resultados para serem exportados.",
-  "exportMessage": "Resultados exportados como:"
+  "exportMessage": "Resultados exportados como:",
+  "clearCacheButton": "Remover Modelos da Cache",
+  "cacheCleared": "Modelos removidos da cache com sucesso.",
+  "cacheNotFound": "Cache não encontrada ou já está vazia.",
+  "cacheClearError": "Falha ao limpar cache:",
+  "customModelSettings": "Adicionar um Modelo Personalizado"
 }

@@ -20,6 +20,7 @@ window.BioUI = class BioUI {
     this.customModelInput = document.getElementById("bio-custom-model");
     this.addCustomBtn = document.getElementById("bio-add-custom-btn");
     this.exportBtn = document.getElementById("bio-export-btn");
+    this.clearCacheBtn = document.getElementById("bio-clear-cache-btn");
     
     // Setup initial state
     this.populateDropdown();
@@ -89,12 +90,18 @@ window.BioUI = class BioUI {
               <span class="bio-help" data-tooltip="${inputText.setLanguageHelp}">${inputText.setLanguage}</span>
               <select id="bio-language-select"></select>
             </div>
-
-            <text class="bio-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModel}</text>
-            <textarea id="bio-custom-model" placeholder='{"name": "Custom", "version": 1.0, ...}'></textarea>
-            <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
+            
+            <div class="bio-setting-row">
+              <details>
+                <summary class="bio-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModelSettings}</summary>
+                <textarea id="bio-custom-model" placeholder='{"name": "custom-model-name", "version": 1.0, ...}'></textarea>
+                <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
+              </details>
+            </div>
+            <div class="bio-setting-row" style="justify-content: center;">
+              <button id="bio-clear-cache-btn">${inputText.clearCacheButton}</button>
+            </div>
           </div>
-          
         </details>
         
         <div id="bio-log-area"></div>
@@ -187,6 +194,20 @@ window.BioUI = class BioUI {
     // Export CSV Button
     this.exportBtn.addEventListener("click", () => {
       this.exportDetections();
+    });
+
+    // Clear Cache Button
+    this.clearCacheBtn.addEventListener("click", async () => {
+      try {
+        const deleted = await caches.delete(window.BioConfig.modelCacheLabel);
+        if (deleted) {
+          this.log(this.uiInputText.cacheCleared);
+        } else {
+          this.log(this.uiInputText.cacheNotFound);
+        }
+      } catch (e) {
+        this.log(this.uiInputText.cacheClearError + " " + e.message);
+      }
     });
 
     // Add Custom Model Button

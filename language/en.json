@@ -10,7 +10,6 @@
   "confidenceHelp": "This parameter relates to the output score of the model which ranges between 0 and 1. Any detection with score below this threshold is ignored.",
   "overlap": "Overlap: ",
   "overlapHelp": "This parameter corresponds to the percentage of overlap between analysis windows within the observation sound. Each model has its own specific analysis window duration.",
-  "customModel": "Add custom model (JSON):",
   "customModelHelp": "The user is able to add a custom model by providing all model properties following the JSON format below.",
   "addCustomButton": "Add to List",
   "clearLogsButton": "Clear Logs",
@@ -24,7 +23,7 @@
   "speciesCell": "Species",
   "confidenceCell": "Confidence",
   "topDetection": "Top detection",
-  "validatingDetection": "Validating top detection species location",
+  "validatingDetection": "Validating detected species location",
   "checkingGBIF": "Checking GBIF coordinate range for",
   "coordNotFound": "Could not find coordinates for this observation.",
   "fetchGBIFError": "Could not fetch GBIF range for",
@@ -46,5 +45,10 @@
   "savedModel": "Saved to cache",
   "loadedModel": "Loaded from cache",
   "noDetectionsToExport": "No analysis data to export.",
-  "exportMessage": "Detections exported as:"
+  "exportMessage": "Detections exported as:",
+  "clearCacheButton": "Clear Model Cache",
+  "cacheCleared": "Model cache cleared successfully.",
+  "cacheNotFound": "Cache not found or already empty.",
+  "cacheClearError": "Failed to clear cache:",
+  "customModelSettings": "Add a Custom Model"
 }

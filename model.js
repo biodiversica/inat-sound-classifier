@@ -9,7 +9,7 @@ window.BioModelEngine = class BioModelEngine {
   }
 
   async fetchWithCache(url, type = "arrayBuffer") {
-    const cache = await caches.open("bioacoustic-models-v1");
+    const cache = await caches.open(window.BioConfig.modelCacheLabel);
     let response = await cache.match(url);
     if (!response) {
       this.ui.log(`${this.ui.uiInputText.modelNotfound}: ${url.split('/').pop()}`);

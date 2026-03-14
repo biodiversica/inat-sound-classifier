@@ -1,4 +1,4 @@
-/* styles.css */
+/* biodiversica.css */
 #bio-model-panel {
   position: fixed;
   bottom: 10px;
@@ -157,10 +157,14 @@
   align-items: center;
   margin-bottom: 5px;
   font-size: 11px;
+  border-bottom: 1px solid #44bc82;
+  border-bottom-style: dashed;
+  padding-bottom: 5px;
 }
 
 .bio-setting-row:last-child {
   margin-bottom: 0;
+  border-bottom: none;
 }
 
 /* Force the sliders to be green */

@@ -1,0 +1,316 @@
+/* inaturalist.css - Adapted for iNaturalist.org color scheme */
+#bio-model-panel {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 520px;
+  background: #ffffff;
+  color: #333333;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 10px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #cccccc;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: width 0.2s ease-in-out;
+}
+
+#bio-model-panel.minimized {
+  width: 250px;
+}
+
+#bio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #74ac00;
+  color: #ffffff;
+  cursor: pointer;
+  border-bottom: 1px solid #cccccc;
+}
+
+#bio-toggle-btn {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+#bio-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.bio-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#bio-model-select {
+  background: #74ac00;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  padding: 2px;
+  outline: none;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-model-select:hover {
+  background: #a5d6a7;
+}
+
+#bio-language-select {
+  background: #74ac00;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  padding: 2px;
+  outline: none;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-language-select:hover {
+  background: #a5d6a7;
+}
+
+#bio-run-btn {
+  background: #007bff;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-run-btn:hover {
+  background: #0056b3;
+  border-color: #007bff;
+}
+
+#bio-clear-btn {
+  background: #dc3545;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+#bio-clear-btn:hover {
+  border-color: #dc3545;
+  background: #c82333;
+}
+
+#bio-export-btn {
+  background: #007bff;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 3px 8px;
+  margin-right: 5px;
+}
+
+#bio-export-btn:hover {
+  background: #0056b3;
+  border-color: #007bff;
+}
+
+#bio-clear-cache-btn {
+  background: #dc3545;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+#bio-clear-cache-btn:hover {
+  border-color: #dc3545;
+  background: #c82333;
+}
+
+#bio-settings-panel {
+  border: 1px dashed #74ac00;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+}
+
+.bio-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 11px;
+  border-bottom: 1px solid #a5d6a7;
+  border-bottom-style: dashed;
+  padding-bottom: 5px;
+}
+
+.bio-setting-row:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+/* Force the sliders to be green */
+.bio-setting-row input[type=range] {
+  width: 120px;
+  accent-color: #74ac00 !important;
+  cursor: ew-resize;
+}
+
+.bio-custom-summary {
+  cursor: pointer;
+  color: #333333;
+  margin-bottom: 5px;
+  font-family: 'Courier New', monospace !important;
+}
+
+#bio-custom-model {
+  width: 100%;
+  height: 40px;
+  background: #ffffff;
+  margin-top: 5px;
+  font-size: 10px;
+  border: 1px solid #74ac00;
+  box-sizing: border-box;
+}
+
+#bio-add-custom-btn {
+  background: #74ac00;
+  color: #ffffff;
+  border: none;
+  padding: 2px 5px;
+  margin-top: 2px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px;
+}
+
+#bio-add-custom-btn:hover {
+  background: #a5d6a7;
+}
+
+#bio-log-area {
+  max-height: 250px;
+  overflow-y: auto;
+  border-top: 1px solid #cccccc;
+  border: 1px dashed #74ac00;
+  padding: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #74ac00 #f8f9fa;
+  /* This prevents the browser from shrinking spaces */
+  white-space: pre !important; 
+  /* Ensure the text doesn't wrap and break the table rows */
+  overflow-x: auto !important;
+}
+
+.bio-log-entry {
+  border-bottom: 1px solid #e9ecef;
+  padding: 3px 0;
+}
+
+/* Result-specific styles */
+.bio-link-model { 
+    color: #007bff !important; 
+    text-decoration: none; 
+}
+.bio-link-taxa { 
+    background: #dc3545 !important; 
+    color: #ffffff; 
+    text-decoration: underline; 
+    font-style: italic; 
+}
+.bio-link-taxa-soft { 
+    background: #a5d6a7 !important; 
+    color: #333333; 
+    text-decoration: underline; 
+    font-style: italic; 
+}
+.bio-line-header { 
+    background: #007bff !important; 
+    color: #ffffff;
+    font-weight: bold; 
+    display: block; 
+    margin-top: 10px; 
+}
+.bio-geo-match { 
+    color: #ffffff; 
+    background: #74ac00 !important; 
+}
+.bio-geo-mismatch { 
+    color: #dc3545 !important; 
+}
+.bio-geo-warning { 
+    background: #dc3545; 
+    color: #ffffff !important; 
+}
+.bio-error { 
+    color: #dc3545 !important; 
+}
+.bio-separator { 
+    border-top: 1px dashed #cccccc; 
+    margin: 5px 0; 
+    display: block; 
+}
+
+.bio-bottom-controls {
+  text-align: right !important;
+  padding: 5px;
+}
+
+/* Container for the tooltip */
+.bio-help {
+  position: relative;
+  cursor: help;
+  /* Visual cue that help is available */
+  /* border-bottom: 1px dotted #0f0;  */
+}
+
+/* The actual tooltip box */
+.bio-help:after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 0%; /* Position above the text */
+  right: 100%;
+  /* transform: translateX(-50%); */
+  background-color: #74ac00;
+  color: #ffffff;
+  padding: 6px 10px;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  /* --- WRAPPING LOGIC --- */
+  white-space: normal;       /* Allows text to wrap to new lines */
+  width: 150px;             /* Forces the box to this width */
+  line-height: 1.4;         /* Makes multi-line text easier to read */
+  text-align: center;       /* Centers the text inside the box */
+  /* ---------------------- */
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none; /* Prevents the tooltip from blocking mouse clicks */
+}
+
+/* Show on hover */
+.bio-help:hover:after {
+  visibility: visible;
+  opacity: 1;
+}

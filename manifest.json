@@ -29,7 +29,7 @@
         "content.js",
         "geo.js"
       ],
-      "css" : ["styles.css"],
+      "css" : ["styles/inaturalist.css"],
       "run_at": "document_idle"
     }
   ],
@@ -38,7 +38,8 @@
       "resources": [
         "onnx/*",
         "model_zoo/*.json",
-        "language/*.json"
+        "language/*.json",
+        "styles/*.css"
       ],
       "matches": ["<all_urls>"]
     }

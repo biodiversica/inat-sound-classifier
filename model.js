@@ -71,7 +71,7 @@ window.BioModelEngine = class BioModelEngine {
     this.ui.log(`<span class="bio-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
 
     // Print model config
-    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}: ${modelConfig.name} v${modelConfig.version}</b>`);
+    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='bio-link-taxa'>${modelConfig.name} v${modelConfig.version}</a>`);
     this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${modelConfig.windowSize}s`);
     this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
     this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);

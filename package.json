@@ -4,7 +4,7 @@
   },
   "scripts": {
     "test": "jest",
-    "sync-onnx": "mkdir -p onnx && cp node_modules/onnxruntime-web/dist/*.wasm node_modules/onnxruntime-web/dist/*.mjs node_modules/onnxruntime-web/dist/ort.min.js onnx/",
+    "sync-onnx": "mkdir -p onnx && cp node_modules/onnxruntime-web/dist/ort.min.js node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs onnx/",
     "postinstall": "npm run sync-onnx"
   },
   "devDependencies": {

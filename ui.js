@@ -217,6 +217,11 @@ window.BioUI = class BioUI {
         const key = "custom_" + Date.now();
         window.BioConfig.modelRegistry[key] = customJson;
         
+        // Save to localStorage
+        const customModels = JSON.parse(localStorage.getItem('bio-custom-models') || '{}');
+        customModels[key] = customJson;
+        localStorage.setItem('bio-custom-models', JSON.stringify(customModels));
+        
         this.populateDropdown();
         this.modelSelect.value = key;
         

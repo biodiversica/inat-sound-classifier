@@ -65,6 +65,25 @@
           window.BioConfig.modelRegistry[modelData.id] = modelData;
         }
       }
+
+      // Load custom models from localStorage
+      const customModels = JSON.parse(localStorage.getItem('bio-custom-models') || '{}');
+      for (const [key, model] of Object.entries(customModels)) {
+        // Apply the same geographic validation as built-in models
+        let shouldAddModel = true;
+        if (model.bbox && obsLocation) {
+          shouldAddModel = isWithinBBox(obsLocation.lat, obsLocation.lon, model.bbox);
+        } else if (model.bbox && !obsLocation) {
+          // If model requires location but observation has none, exclude it
+          shouldAddModel = false;
+        }
+        // If no bbox, it's global and should be included
+
+        if (shouldAddModel) {
+          window.BioConfig.modelRegistry[key] = model;
+        }
+      }
+
       console.log("[iNaturalist Sound Classifier] Valid models for this location:", Object.keys(window.BioConfig.modelRegistry));
 
     } catch (error) {

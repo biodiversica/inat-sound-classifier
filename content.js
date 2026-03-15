@@ -209,6 +209,8 @@
       }
       ui.log(`<b>${languageConfig.endOfAnalysis}</b>`);
       // ui.log(`<span class="bio-error">Fail: ${e.message}</span>`);
+    } catch (e) {
+      ui.log(`<span class="bio-error">${languageConfig.failedAnalysis}: ${e.message}</span>`);
     } finally {
       ui.runBtn.disabled = false;
       ui.runBtn.innerText = languageConfig.analysisButton;

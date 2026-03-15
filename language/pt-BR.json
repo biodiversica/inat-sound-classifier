@@ -54,5 +54,7 @@
   "cacheCleared": "Modelos removidos da cache com sucesso.",
   "cacheNotFound": "Cache não encontrada ou já está vazia.",
   "cacheClearError": "Falha ao limpar cache:",
-  "customModelSettings": "Adicionar um Modelo Personalizado"
+  "customModelSettings": "Adicionar um Modelo Personalizado",
+  "failedAnalysis": "Erro no processo de análise",
+  "formatNotSupported": " não suportado. Apenas suporte para modelos em formato ONNX."
 }

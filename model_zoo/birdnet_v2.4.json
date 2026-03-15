@@ -2,7 +2,7 @@
   "id": "birdnet_v2.4",
   "name": "BirdNET",
   "version": 2.4,
-  "about": "https://birdnet.cornell.edu/",
+  "about": "https://birdnet.cornell.edu/about/",
   "modelUrl": "https://huggingface.co/justinchuby/BirdNET-onnx/resolve/main/model.onnx",
   "labelsUrl": "https://huggingface.co/justinchuby/BirdNET-onnx/resolve/main/BirdNET_GLOBAL_6K_V2.4_Labels.txt",
   "sampleRate": 48000,

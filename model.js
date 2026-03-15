@@ -8,6 +8,16 @@ window.BioModelEngine = class BioModelEngine {
     this.currentLanguageConfig = null;
   }
 
+  // Validate if buffer looks like a valid ONNX model
+  isValidONNXBuffer(buffer) {
+    if (!buffer || buffer.byteLength < 100) return false; // Too small for a valid model
+    
+    const view = new Uint8Array(buffer);
+    // ONNX models are protobuf files. Check for common protobuf field starts
+    // First field is usually ir_version (field 1) or producer_name (field 2)
+    return view[0] === 0x08 || view[0] === 0x12 || view[0] === 0x1A;
+  }
+
   async fetchWithCache(url, type = "arrayBuffer") {
     const cache = await caches.open(window.BioConfig.modelCacheLabel);
     let response = await cache.match(url);
@@ -61,6 +71,12 @@ window.BioModelEngine = class BioModelEngine {
   }
 
   async loadModel(modelConfig) {
+    // Check model format
+    if (modelConfig.format !== 'onnx') {
+      this.ui.log(`<span class="bio-error">${this.ui.uiInputText.failedAnalysis}: ${modelConfig.format} ${this.ui.uiText.formatNotSupported}</span>`);
+      throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}. Only ONNX models are supported.`);
+    }
+
     // Release old session from memory if we are switching models
     if (this.session) {
       try { await this.session.release(); } catch (e) {}
@@ -82,6 +98,12 @@ window.BioModelEngine = class BioModelEngine {
 
     // Fetch model buffer and labels using Cache
     const modelBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
+    
+    // Validate the model buffer
+    if (!this.isValidONNXBuffer(modelBuffer)) {
+      throw new Error("Downloaded model does not appear to be a valid ONNX file.");
+    }
+    
     const labelsText = await this.fetchWithCache(modelConfig.labelsUrl, "text");
     
     this.labels = labelsText.trim().split("\n");

@@ -54,5 +54,7 @@
   "cacheCleared": "Model cache cleared successfully.",
   "cacheNotFound": "Cache not found or already empty.",
   "cacheClearError": "Failed to clear cache:",
-  "customModelSettings": "Add a Custom Model"
+  "customModelSettings": "Add a Custom Model",
+  "failedAnalysis": "Analysis failed",
+  "formatNotSupported": "format is not supported. Only ONNX models are supported in the current version."
 }

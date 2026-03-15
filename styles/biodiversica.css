@@ -287,16 +287,16 @@
   content: attr(data-tooltip);
   position: absolute;
   bottom: 0%; /* Position above the text */
-  right: 100%;
+  right: 115%;
   /* transform: translateX(-50%); */
-  background-color: #118b50;
-  color: #fcfee5ff;
+  background-color: #fcfee5ff;
+  color: #118b50;;
   padding: 6px 10px;
-  border: 1px solid #fcfee5ff;
+  border: 1px solid #118b50;
   border-radius: 4px;
   /* --- WRAPPING LOGIC --- */
   white-space: normal;       /* Allows text to wrap to new lines */
-  width: 150px;             /* Forces the box to this width */
+  width: 300px;             /* Forces the box to this width */
   line-height: 1.4;         /* Makes multi-line text easier to read */
   text-align: center;       /* Centers the text inside the box */
   /* ---------------------- */

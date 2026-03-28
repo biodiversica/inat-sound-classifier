@@ -310,7 +310,7 @@ describe('BioModelEngine', () => {
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: true
+        activation: "softmax"
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];
@@ -330,7 +330,7 @@ describe('BioModelEngine', () => {
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: false
+        activation: "sigmoid"
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];
@@ -347,12 +347,32 @@ describe('BioModelEngine', () => {
       expect(result.score).toBeCloseTo(0.993, 2);
     });
 
+    test('should return raw logit score with none activation', async () => {
+      engine.currentModelConfig = {
+        inputIndex: 0,
+        outputIndex: 0,
+        activation: "none"
+      };
+      engine.inputNames = ['input_0'];
+      engine.outputNames = ['output_0'];
+      engine.labels = ['Species A', 'Species B', 'Species C'];
+
+      engine._sendMessage = jest.fn().mockResolvedValue({
+        logits: new Float32Array([-1.0, 3.5, 2.0])
+      });
+
+      const result = await engine.predictChunk(new Float32Array(48000));
+
+      expect(result.label).toBe('Species B');
+      expect(result.score).toBe(3.5);
+    });
+
     test('should index labels directly without offset', async () => {
       // Labels are already parsed by parseLabels (header stripped, column extracted)
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: false
+        activation: "sigmoid"
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];

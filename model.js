@@ -199,7 +199,7 @@ window.BioModelEngine = class BioModelEngine {
     this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
     this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
     this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
-    this.ui.log(`- ${this.ui.uiInputText.usingSoftmax}: ${modelConfig.softmax}`);
+    this.ui.log(`- ${this.ui.uiInputText.activation}: ${modelConfig.activation}`);
     this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
 
 
@@ -249,17 +249,23 @@ window.BioModelEngine = class BioModelEngine {
     });
     const logits = result.logits;
 
-    let bestIdx = 0, bestScore = 0;
+    let bestIdx = 0, bestScore = -Infinity;
+    const activation = config.activation || "sigmoid";
 
-    if (config.softmax) {
+    if (activation === "softmax") {
       const probs = this.softmax(Array.from(logits));
       for (let i = 0; i < probs.length; i++) {
         if (probs[i] > bestScore) { bestScore = probs[i]; bestIdx = i; }
       }
-    } else {
+    } else if (activation === "sigmoid") {
       for (let i = 0; i < logits.length; i++) {
         const score = this.sigmoid(logits[i]);
         if (score > bestScore) { bestScore = score; bestIdx = i; }
+      }
+    } else {
+      // "none" — use raw logits
+      for (let i = 0; i < logits.length; i++) {
+        if (logits[i] > bestScore) { bestScore = logits[i]; bestIdx = i; }
       }
     }
 

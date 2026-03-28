@@ -12,7 +12,7 @@
   },
   "sampleRate": 48000,
   "windowSize": 3,
-  "softmax": false,
+  "activation": "sigmoid",
   "inputIndex": 0,
   "outputIndex": 0,
   "bbox": null,

@@ -41,7 +41,7 @@
   "sampleRate": "Sample rate",
   "inputIndex": "Input index",
   "outputIndex": "Output index",
-  "usingSoftmax": "Using softmax",
+  "activation": "Activation",
   "sources": "Sources",
   "preparingModel": "Preparing model session",
   "loadingSuccess": "Model successfully loaded to memory",

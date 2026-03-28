@@ -41,7 +41,7 @@
   "sampleRate": "Frequência de amostragem",
   "inputIndex": "Índice de entrada",
   "outputIndex": "Índice de saída",
-  "usingSoftmax": "Usando softmax",
+  "activation": "Ativação",
   "sources": "Fontes",
   "preparingModel": "Preparando modelo para análise",
   "loadingSuccess": "Modelo carregado com sucesso na memória.",

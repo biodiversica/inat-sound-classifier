@@ -231,6 +231,7 @@
   white-space: pre !important; 
   /* Ensure the text doesn't wrap and break the table rows */
   overflow-x: auto !important;
+  background: #f8f9fa;
 }
 
 .bio-log-entry {

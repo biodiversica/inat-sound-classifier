@@ -12,6 +12,24 @@ window.BioModelEngine = class BioModelEngine {
     this._pendingReject = null;
   }
 
+  // Parse a labels file into an array of species names.
+  // Handles CSV/TSV/text files with configurable delimiter, column, and header.
+  parseLabels(text, labelsConfig) {
+    const lines = text.trim().split("\n");
+    const start = labelsConfig.header ? 1 : 0;
+    const delimiter = labelsConfig.delimiter;
+    const column = labelsConfig.column || 0;
+
+    const labels = [];
+    for (let i = start; i < lines.length; i++) {
+      const line = lines[i].replace(/[\r]/g, "");
+      if (!line) continue;
+      const value = delimiter ? line.split(delimiter)[column] : line;
+      labels.push((value || "").trim());
+    }
+    return labels;
+  }
+
   // Validate if buffer looks like a valid ONNX model
   isValidONNXBuffer(buffer) {
     if (!buffer || buffer.byteLength < 100) return false; // Too small for a valid model
@@ -182,7 +200,7 @@ window.BioModelEngine = class BioModelEngine {
     this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
     this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
     this.ui.log(`- ${this.ui.uiInputText.usingSoftmax}: ${modelConfig.softmax}`);
-    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labelsUrl}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
+    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
 
 
     // Fetch model buffer and labels using Cache
@@ -193,9 +211,9 @@ window.BioModelEngine = class BioModelEngine {
       throw new Error("Downloaded model does not appear to be a valid ONNX file.");
     }
 
-    const labelsText = await this.fetchWithCache(modelConfig.labelsUrl, "text");
+    const labelsText = await this.fetchWithCache(modelConfig.labels.url, "text");
 
-    this.labels = labelsText.trim().split("\n");
+    this.labels = this.parseLabels(labelsText, modelConfig.labels);
 
     // Create a fresh worker and load the model inside it
     await this._createWorker();
@@ -246,7 +264,7 @@ window.BioModelEngine = class BioModelEngine {
     }
 
     return {
-      label: this.labels[bestIdx + config.skipLabelsHeader],
+      label: this.labels[bestIdx],
       score: bestScore
     };
   }

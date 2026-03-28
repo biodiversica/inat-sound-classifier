@@ -12,6 +12,7 @@
     "https://api.inaturalist.org/*",
     "https://static.inaturalist.org/*",
     "https://huggingface.co/*",
+    "https://zenodo.org/*",
     "https://api.gbif.org/*"
   ],
   "background": {

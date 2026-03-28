@@ -142,7 +142,7 @@
           const t1 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage))).toFixed(1);
           const t2 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
           if (res.score > window.BioConfig.confidenceThreshold) {
-            const speciesName = res.label.split("_")[0].replace(/[\n\r]/g, "").trim();
+            const speciesName = res.label.replace(/[\n\r]/g, "").trim();
             const timeRange = `${t1} - ${t2}s`;
 
             // Format cells with fixed widths

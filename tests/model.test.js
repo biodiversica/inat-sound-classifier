@@ -54,6 +54,80 @@ describe('BioModelEngine', () => {
     });
   });
 
+  describe('parseLabels', () => {
+    test('should parse plain text with no header (one label per line)', () => {
+      const text = "Mallard\nSparrow\nEagle\n";
+      const config = { header: false, delimiter: null, column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow', 'Eagle']);
+    });
+
+    test('should skip header row when header is true', () => {
+      const text = "species_name\nMallard\nSparrow\n";
+      const config = { header: true, delimiter: null, column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should split by comma delimiter and extract column', () => {
+      const text = "name,code\nMallard,MAL\nSparrow,SPA\n";
+      const config = { header: true, delimiter: ",", column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should extract non-zero column index', () => {
+      const text = "code,name,family\nMAL,Mallard,Anatidae\nSPA,Sparrow,Passeridae\n";
+      const config = { header: true, delimiter: ",", column: 1 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should handle tab-separated files', () => {
+      const text = "code\tname\nMAL\tMallard\nSPA\tSparrow\n";
+      const config = { header: true, delimiter: "\t", column: 1 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should handle semicolon-separated files', () => {
+      const text = "Mallard;MAL;Anatidae\nSparrow;SPA;Passeridae\n";
+      const config = { header: false, delimiter: ";", column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should handle underscore delimiter (BirdNET format)', () => {
+      const text = "Mallard_Anas platyrhynchos\nSparrow_Passer domesticus\n";
+      const config = { header: false, delimiter: "_", column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should extract scientific name from underscore-delimited labels', () => {
+      const text = "Mallard_Anas platyrhynchos\nSparrow_Passer domesticus\n";
+      const config = { header: false, delimiter: "_", column: 1 };
+      expect(engine.parseLabels(text, config)).toEqual(['Anas platyrhynchos', 'Passer domesticus']);
+    });
+
+    test('should skip empty lines', () => {
+      const text = "Mallard\n\nSparrow\n\n\nEagle\n";
+      const config = { header: false, delimiter: null, column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow', 'Eagle']);
+    });
+
+    test('should handle Windows-style CRLF line endings', () => {
+      const text = "header\r\nMallard\r\nSparrow\r\n";
+      const config = { header: true, delimiter: null, column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should trim whitespace from extracted values', () => {
+      const text = "  Mallard , MAL \n Sparrow , SPA \n";
+      const config = { header: false, delimiter: ",", column: 0 };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+
+    test('should default column to 0 when not specified', () => {
+      const text = "Mallard,MAL\nSparrow,SPA\n";
+      const config = { header: false, delimiter: "," };
+      expect(engine.parseLabels(text, config)).toEqual(['Mallard', 'Sparrow']);
+    });
+  });
+
   describe('isValidONNXBuffer', () => {
     test('should reject null/undefined buffer', () => {
       expect(engine.isValidONNXBuffer(null)).toBe(false);
@@ -187,7 +261,11 @@ describe('BioModelEngine', () => {
       const mockTerminate = jest.fn();
       engine.worker = { terminate: mockTerminate };
 
-      const config = { format: 'onnx', modelUrl: 'http://example.com/model.onnx', labelsUrl: 'http://example.com/labels.txt' };
+      const config = {
+        format: 'onnx',
+        modelUrl: 'http://example.com/model.onnx',
+        labels: { url: 'http://example.com/labels.txt', header: false, delimiter: null, column: 0 }
+      };
 
       // Mock fetchWithCache to throw so we can test early behavior
       engine.fetchWithCache = jest.fn().mockRejectedValue(new Error('test stop'));
@@ -232,21 +310,19 @@ describe('BioModelEngine', () => {
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: true,
-        skipLabelsHeader: 0
+        softmax: true
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];
-      engine.labels = ['Species A_code', 'Species B_code', 'Species C_code'];
+      engine.labels = ['Species A', 'Species B', 'Species C'];
 
-      // Mock _sendMessage to return logits where index 1 is highest
       engine._sendMessage = jest.fn().mockResolvedValue({
         logits: new Float32Array([1.0, 5.0, 2.0])
       });
 
       const result = await engine.predictChunk(new Float32Array(48000));
 
-      expect(result.label).toBe('Species B_code');
+      expect(result.label).toBe('Species B');
       expect(result.score).toBeGreaterThan(0.9);
     });
 
@@ -254,12 +330,11 @@ describe('BioModelEngine', () => {
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: false,
-        skipLabelsHeader: 0
+        softmax: false
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];
-      engine.labels = ['Cat_sound', 'Dog_sound', 'Bird_sound'];
+      engine.labels = ['Cat', 'Dog', 'Bird'];
 
       // logits: sigmoid(5)~0.993, sigmoid(-2)~0.119, sigmoid(1)~0.731
       engine._sendMessage = jest.fn().mockResolvedValue({
@@ -268,21 +343,20 @@ describe('BioModelEngine', () => {
 
       const result = await engine.predictChunk(new Float32Array(48000));
 
-      expect(result.label).toBe('Cat_sound');
+      expect(result.label).toBe('Cat');
       expect(result.score).toBeCloseTo(0.993, 2);
     });
 
-    test('should respect skipLabelsHeader offset', async () => {
+    test('should index labels directly without offset', async () => {
+      // Labels are already parsed by parseLabels (header stripped, column extracted)
       engine.currentModelConfig = {
         inputIndex: 0,
         outputIndex: 0,
-        softmax: false,
-        skipLabelsHeader: 1
+        softmax: false
       };
       engine.inputNames = ['input_0'];
       engine.outputNames = ['output_0'];
-      // labels[0] is header, labels[1..] are real
-      engine.labels = ['header_line', 'Real Species A_code', 'Real Species B_code'];
+      engine.labels = ['Anas platyrhynchos', 'Passer domesticus'];
 
       engine._sendMessage = jest.fn().mockResolvedValue({
         logits: new Float32Array([5.0, -2.0])
@@ -290,8 +364,7 @@ describe('BioModelEngine', () => {
 
       const result = await engine.predictChunk(new Float32Array(48000));
 
-      // bestIdx=0, label = labels[0 + 1] = 'Real Species A_code'
-      expect(result.label).toBe('Real Species A_code');
+      expect(result.label).toBe('Anas platyrhynchos');
     });
   });
 });

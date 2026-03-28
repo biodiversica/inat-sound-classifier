@@ -28,35 +28,56 @@ window.BioModelEngine = class BioModelEngine {
     if (!response) {
       this.ui.log(`${this.ui.uiInputText.notFoundInCache}: ${url.split('/').pop()}`);
       this.ui.log(`${this.ui.uiInputText.downloadingModel}... 0%`, "download-progress");
-      response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : null;
-      const reader = response.body.getReader();
-      const chunks = [];
-      let loaded = 0;
+      // Download via a long-lived port to the background service worker.
+      // This bypasses CORS (content scripts run under the page's origin)
+      // and keeps the MV3 service worker alive during large downloads.
+      const uint8Array = await new Promise((resolve, reject) => {
+        const port = chrome.runtime.connect({ name: "download" });
+        const chunks = [];
+        let totalSize = 0;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        loaded += value.length;
-        if (total) {
-          const percent = Math.round((loaded / total) * 100);
-          this.ui.log(`${this.ui.uiInputText.downloadingModel}... ${percent}%`, "download-progress");
-        }
-      }
+        port.onMessage.addListener((msg) => {
+          if (msg.type === "size") {
+            totalSize = msg.total;
+          } else if (msg.type === "chunk") {
+            const binary = atob(msg.data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            chunks.push(bytes);
 
-      // Combine chunks
-      const uint8Array = new Uint8Array(loaded);
-      let offset = 0;
-      for (const chunk of chunks) {
-        uint8Array.set(chunk, offset);
-        offset += chunk.length;
-      }
+            if (totalSize && msg.downloaded) {
+              const pct = Math.round((msg.downloaded / totalSize) * 100);
+              this.ui.log(`${this.ui.uiInputText.downloadingModel}... ${pct}%`, "download-progress");
+            }
+          } else if (msg.type === "done") {
+            const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+            const combined = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+              combined.set(chunk, offset);
+              offset += chunk.length;
+            }
+            port.disconnect();
+            resolve(combined);
+          } else if (msg.type === "error") {
+            port.disconnect();
+            reject(new Error(msg.message));
+          }
+        });
 
-      // Create response for caching
+        port.onDisconnect.addListener(() => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          }
+        });
+
+        port.postMessage({ url });
+      });
+
+      // Cache for future use
       const cachedResponse = new Response(uint8Array);
       await cache.put(url, cachedResponse);
 

@@ -1,5 +1,12 @@
 // audio.js
+
+/** Audio fetching, decoding, resampling, and chunking utilities. */
 window.BioAudio = {
+  /**
+   * Queries the iNaturalist API for sound file URLs attached to an observation.
+   * @param {string} obsId - The iNaturalist observation ID.
+   * @returns {Promise<string[]|undefined>} Array of sound file URLs, or undefined if none found.
+   */
   async checkObservationSounds(obsId) {
     
     const apiURL = `https://api.inaturalist.org/v1/observations/${obsId}?include=sounds`;
@@ -18,6 +25,13 @@ window.BioAudio = {
     if (urls.length > 0) return urls;
   },
 
+  /**
+   * Fetches an audio file via the background script and decodes it into an AudioBuffer.
+   * The AudioContext is closed after decoding to free resources.
+   * @param {string} url - URL of the audio file.
+   * @returns {Promise<AudioBuffer>} Decoded audio buffer.
+   * @throws {Error} If the background fetch fails.
+   */
   async decodeAudio(url) {
     // Ask background.js to fetch the file
     const response = await new Promise(resolve => {
@@ -46,6 +60,13 @@ window.BioAudio = {
     return decoded;
   },
 
+  /**
+   * Resamples an AudioBuffer to a target sample rate using an OfflineAudioContext.
+   * Returns the original channel data unchanged if the rates already match.
+   * @param {AudioBuffer} audioBuffer - The decoded audio buffer to resample.
+   * @param {number} targetSampleRate - Desired sample rate in Hz (e.g. 48000).
+   * @returns {Promise<Float32Array>} Mono audio samples at the target rate.
+   */
   async resample(audioBuffer, targetSampleRate) {
     if (audioBuffer.sampleRate === targetSampleRate) return audioBuffer.getChannelData(0);
     const offline = new OfflineAudioContext(1, Math.ceil(audioBuffer.duration * targetSampleRate), targetSampleRate);
@@ -57,6 +78,15 @@ window.BioAudio = {
     return rendered.getChannelData(0);
   },
 
+  /**
+   * Splits audio samples into fixed-size chunks for inference.
+   * The last chunk is zero-padded if shorter than the window size.
+   * @param {Float32Array} samples - Mono audio samples.
+   * @param {number} sampleRate - Sample rate in Hz.
+   * @param {number} windowSize - Analysis window duration in seconds.
+   * @param {number} overlapSec - Overlap fraction between consecutive windows (0–1).
+   * @returns {Float32Array[]} Array of audio chunks, each of length `sampleRate * windowSize`.
+   */
   chunkAudio(samples, sampleRate, windowSize, overlapSec) {
     const size = sampleRate * windowSize;
     const step_size = sampleRate * (windowSize * (1 - overlapSec));

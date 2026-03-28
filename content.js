@@ -4,6 +4,10 @@
   let engine;
   let currentAttachedId = null;
 
+  /**
+   * Extracts the iNaturalist observation ID from the page's og:url meta tag.
+   * @returns {string|null} The numeric observation ID, or null if not found.
+   */
   function getObservationId() {
     const meta = document.querySelector("meta[property='og:url']");
     const url = meta?.getAttribute("content");
@@ -11,7 +15,10 @@
     return match ? match[1] : null;
   }
 
-  // A helper to extract lat/lon from the iNaturalist DOM
+  /**
+   * Extracts latitude/longitude from iNaturalist-specific meta tags in the DOM.
+   * @returns {{lat: number, lon: number}|null} Coordinates, or null if not present.
+   */
   function getObservationLocation() {
     // iNaturalist stores coords in the map link or global variables.
     // Example checking a common metadata tag or DOM element:
@@ -27,6 +34,13 @@
     return null; // Observation has no location data
   }
 
+  /**
+   * Checks whether observation coordinates fall within a model's geographic bounding box.
+   * @param {number} obsLat - Observation latitude.
+   * @param {number} obsLon - Observation longitude.
+   * @param {number[]|null} bbox - Bounding box as [minLat, minLon, maxLat, maxLon], or null for global models.
+   * @returns {boolean} `true` if inside the box or if the model has no bbox restriction.
+   */
   function isWithinBBox(obsLat, obsLon, bbox) {
     if (!bbox) return true; // Global model (no bbox restrictions)
     
@@ -34,6 +48,12 @@
     return (obsLat >= minLat && obsLat <= maxLat && obsLon >= minLon && obsLon <= maxLon);
   }
 
+  /**
+   * Builds the global model registry by loading model zoo JSON files and
+   * filtering them against the current observation's geographic location.
+   * Also loads any user-added custom models from localStorage.
+   * @returns {Promise<void>}
+   */
   async function loadGeographicModelRegistry() {
     window.BioConfig.modelRegistry = {}; // Clear existing
     const obsLocation = getObservationLocation();
@@ -91,6 +111,11 @@
     }
   }
 
+  /**
+   * Loads all available UI language translations from bundled JSON files
+   * into the global config.
+   * @returns {Promise<void>}
+   */
   async function loadLanguageOptions() {
     window.BioConfig.uiText = {}; // Clear existing
 
@@ -111,6 +136,15 @@
     }
   }
 
+  /**
+   * Main analysis pipeline: loads the selected model, decodes all sound files,
+   * runs chunk-by-chunk inference, validates top detections against GBIF/iNaturalist
+   * geographic data, and logs results. The inference worker is terminated on completion
+   * to reclaim WASM memory.
+   * @param {Object} modelConfig - Model configuration from the model zoo.
+   * @param {Object} languageConfig - Localized UI strings for the selected language.
+   * @returns {Promise<void>}
+   */
   async function runAnalysis(modelConfig, languageConfig) {
     const obsId = getObservationId();
     if (!obsId) return ui.log("<span class='bio-error'>ID Error</span>");
@@ -240,6 +274,10 @@
     }
   }
 
+  /**
+   * Tears down the current UI panel and re-initializes from scratch.
+   * Called when the user switches the display language.
+   */
   function triggerRebuild() {
     ui.panel.remove();
     ui = null;
@@ -247,6 +285,13 @@
     init(); // Force it to run immediately instead of waiting for the interval
   }
 
+  /**
+   * Entry point: detects the current observation, checks for audio files,
+   * loads the model registry and language options, resolves the user's preferred
+   * language, and creates or reveals the UI panel. Called on page load and
+   * periodically to handle iNaturalist's dynamic page transitions.
+   * @returns {Promise<void>}
+   */
   async function init() {
     const obsId = getObservationId();
     

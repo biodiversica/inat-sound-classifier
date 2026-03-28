@@ -1,5 +1,13 @@
 // model.js
+
+/**
+ * Manages ONNX model lifecycle: downloading, caching, label parsing,
+ * Web Worker–based inference, and activation functions (softmax/sigmoid).
+ */
 window.BioModelEngine = class BioModelEngine {
+  /**
+   * @param {BioUI} ui - UI instance used for logging progress and status messages.
+   */
   constructor(ui) {
     this.ui = ui;
     this.worker = null;
@@ -12,8 +20,17 @@ window.BioModelEngine = class BioModelEngine {
     this._pendingReject = null;
   }
 
-  // Parse a labels file into an array of species names.
-  // Handles CSV/TSV/text files with configurable delimiter, column, and header.
+  /**
+   * Parses a labels file into an array of species names.
+   * Handles CSV/TSV/plain-text files with configurable delimiter, column index,
+   * and optional header row.
+   * @param {string} text - Raw text content of the labels file.
+   * @param {Object} labelsConfig - Parsing options.
+   * @param {boolean} labelsConfig.header - Whether the first row is a header to skip.
+   * @param {string|null} labelsConfig.delimiter - Column delimiter (e.g. ",", "\t", "_"), or null for single-column files.
+   * @param {number} [labelsConfig.column=0] - Zero-based column index to extract.
+   * @returns {string[]} Array of trimmed label strings.
+   */
   parseLabels(text, labelsConfig) {
     const lines = text.trim().split("\n");
     const start = labelsConfig.header ? 1 : 0;
@@ -30,7 +47,12 @@ window.BioModelEngine = class BioModelEngine {
     return labels;
   }
 
-  // Validate if buffer looks like a valid ONNX model
+  /**
+   * Checks whether an ArrayBuffer looks like a valid ONNX model by inspecting
+   * its size and the first protobuf field tag byte.
+   * @param {ArrayBuffer|null} buffer - The buffer to validate.
+   * @returns {boolean} `true` if the buffer passes basic ONNX format checks.
+   */
   isValidONNXBuffer(buffer) {
     if (!buffer || buffer.byteLength < 100) return false; // Too small for a valid model
 
@@ -40,6 +62,14 @@ window.BioModelEngine = class BioModelEngine {
     return view[0] === 0x08 || view[0] === 0x12 || view[0] === 0x1A;
   }
 
+  /**
+   * Downloads a resource via the background service worker with Cache API storage.
+   * Uses a long-lived port connection with flow control for large files (e.g. ONNX models)
+   * and logs download progress to the UI.
+   * @param {string} url - The URL to fetch.
+   * @param {"arrayBuffer"|"text"} [type="arrayBuffer"] - Desired return type.
+   * @returns {Promise<ArrayBuffer|string>} The fetched data, from cache or network.
+   */
   async fetchWithCache(url, type = "arrayBuffer") {
     const cache = await caches.open(window.BioConfig.modelCacheLabel);
     let response = await cache.match(url);
@@ -115,7 +145,12 @@ window.BioModelEngine = class BioModelEngine {
     }
   }
 
-  // Create a Web Worker using a blob URL for CSP compatibility
+  /**
+   * Creates a Web Worker for ONNX Runtime inference using a blob URL.
+   * The blob URL approach avoids Content Security Policy restrictions that
+   * block loading worker scripts from extension URLs in content script context.
+   * @returns {Promise<void>} Resolves when the worker is initialized and ORT is ready.
+   */
   _createWorker() {
     return new Promise((resolve, reject) => {
       const workerScriptUrl = api.runtime.getURL("inference-worker.js");
@@ -149,6 +184,12 @@ window.BioModelEngine = class BioModelEngine {
     });
   }
 
+  /**
+   * Handles incoming messages from the inference worker.
+   * Routes success responses to the pending resolve callback and error
+   * responses to the pending reject callback.
+   * @param {MessageEvent} e - Worker message event.
+   */
   _handleMessage(e) {
     const { type } = e.data;
     if (type === "error") {
@@ -162,6 +203,13 @@ window.BioModelEngine = class BioModelEngine {
     this._pendingReject = null;
   }
 
+  /**
+   * Sends a message to the inference worker and returns a promise that resolves
+   * with the worker's response. Only one request can be in-flight at a time.
+   * @param {Object} msg - The message payload to send.
+   * @param {Transferable[]} [transfer] - Optional transferable objects (e.g. ArrayBuffers).
+   * @returns {Promise<Object>} The worker's response data.
+   */
   _sendMessage(msg, transfer) {
     return new Promise((resolve, reject) => {
       this._pendingResolve = resolve;
@@ -170,9 +218,11 @@ window.BioModelEngine = class BioModelEngine {
     });
   }
 
-  // Terminate the worker to fully reclaim WASM memory.
-  // WebAssembly.Memory can grow but never shrink; terminating the
-  // worker is the only way to release that memory back to the OS.
+  /**
+   * Terminates the inference worker to fully reclaim WASM memory.
+   * WebAssembly.Memory can grow but never shrink; terminating the
+   * worker is the only way to release that memory back to the OS.
+   */
   terminateWorker() {
     if (this.worker) {
       this.worker.terminate();
@@ -182,6 +232,18 @@ window.BioModelEngine = class BioModelEngine {
     this.outputNames = null;
   }
 
+  /**
+   * Loads an ONNX model: validates format, terminates any existing worker,
+   * downloads the model and labels (with caching), creates a fresh worker,
+   * and initializes the ORT inference session.
+   * @param {Object} modelConfig - Model configuration from the model zoo JSON.
+   * @param {string} modelConfig.format - Must be "onnx".
+   * @param {string} modelConfig.modelUrl - URL of the ONNX model file.
+   * @param {Object} modelConfig.labels - Label file configuration passed to {@link parseLabels}.
+   * @param {string} modelConfig.activation - Activation function: "softmax", "sigmoid", or "none".
+   * @returns {Promise<void>}
+   * @throws {Error} If the model format is not ONNX or the downloaded buffer is invalid.
+   */
   async loadModel(modelConfig) {
     // Check model format
     if (modelConfig.format !== 'onnx') {
@@ -229,8 +291,20 @@ window.BioModelEngine = class BioModelEngine {
     this.ui.log(`<b>${this.ui.uiInputText.loadingSuccess}</b>`);
   }
 
+  /**
+   * Computes the sigmoid activation for a single value.
+   * @param {number} x - Input logit.
+   * @returns {number} Value in the range (0, 1).
+   */
   sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
 
+  /**
+   * Computes the softmax probability distribution over an array of logits.
+   * Numerically stable: subtracts the max logit before exponentiation to
+   * prevent overflow.
+   * @param {number[]} logits - Array of raw model output values.
+   * @returns {number[]} Probability distribution that sums to 1.
+   */
   softmax(logits) {
     const max = logits.reduce((a, b) => Math.max(a, b), -Infinity);
     const exps = logits.map(x => Math.exp(x - max));
@@ -238,6 +312,13 @@ window.BioModelEngine = class BioModelEngine {
     return exps.map(x => x / sum);
   }
 
+  /**
+   * Runs inference on a single audio chunk and returns the top prediction.
+   * Sends the chunk to the worker, applies the configured activation function,
+   * and maps the best-scoring index to its label.
+   * @param {Float32Array} chunk - Audio samples for one analysis window.
+   * @returns {Promise<{label: string, score: number}>} The top species label and its score.
+   */
   async predictChunk(chunk) {
     const config = this.currentModelConfig;
     const inputName = this.inputNames[config.inputIndex];

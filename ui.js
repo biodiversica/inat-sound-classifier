@@ -1,5 +1,16 @@
 // ui.js
+
+/**
+ * Manages the extension's UI panel injected into iNaturalist observation pages.
+ * Handles model/language dropdowns, settings sliders, log output, and CSV export.
+ */
 window.BioUI = class BioUI {
+  /**
+   * Creates and injects the UI panel into the page.
+   * @param {Function} onRunCallback - Called when the user clicks "Run Analysis" with `(modelConfig, languageConfig)`.
+   * @param {Object} uiInputText - Localized UI strings for the selected language.
+   * @param {Function} triggerRebuild - Called when the user changes language to tear down and re-initialize the UI.
+   */
   constructor(onRunCallback, uiInputText, triggerRebuild) {
     this.onRunCallback = onRunCallback;
     this.uiInputText = uiInputText;
@@ -28,7 +39,13 @@ window.BioUI = class BioUI {
     this.setupEventListeners();
   }
 
-  // Pad string to specific length
+  /**
+   * Pads or truncates a string to a fixed display width.
+   * Strings longer than `length` are truncated with an ellipsis ("...").
+   * @param {*} str - The value to format (coerced to string).
+   * @param {number} length - Target character width.
+   * @returns {string} Fixed-width string.
+   */
   pad(str, length) {
     str = String(str); // Ensure it's a string
     if (str.length >= length) {
@@ -37,7 +54,13 @@ window.BioUI = class BioUI {
     return str + " ".repeat(length - str.length);
   }
 
-  // Helper to print a table header
+  /**
+   * Prints a formatted table header row to the log area.
+   * @param {number} timeWidth - Column width for the time range.
+   * @param {number} speciesWidth - Column width for the species name.
+   * @param {number} confidenceWidth - Column width for the confidence score.
+   * @param {string} tableClass - CSS class applied to the header row.
+   */
   printTableHeader(timeWidth, speciesWidth, confidenceWidth, tableClass) {
     const col1 = this.pad(this.uiInputText.timeCell, timeWidth);
     const col2 = this.pad(this.uiInputText.speciesCell, speciesWidth);
@@ -46,6 +69,9 @@ window.BioUI = class BioUI {
     this.log(`<b class=${tableClass}>${col1} | ${col2} | ${col3}</b>`);
   }
 
+  /**
+   * Removes all entries from the log area.
+   */
   clearLog() {
     const logArea = document.getElementById("bio-log-area");
     if (logArea) {
@@ -53,6 +79,11 @@ window.BioUI = class BioUI {
     }
   }
 
+  /**
+   * Injects the extension's HTML panel into the page DOM.
+   * No-ops if the panel already exists (prevents duplicates on re-runs).
+   * @param {Object} inputText - Localized UI strings used for labels and tooltips.
+   */
   injectPanel(inputText) {
     // Prevent duplicate panels if the script runs twice
     if (document.getElementById("bio-model-panel")) return;
@@ -119,6 +150,9 @@ window.BioUI = class BioUI {
     document.body.appendChild(panelDiv);
   }
 
+  /**
+   * Populates the model selection dropdown from the global model registry.
+   */
   populateDropdown() {
     this.modelSelect.innerHTML = "";
     for (const [key, model] of Object.entries(window.BioConfig.modelRegistry)) {
@@ -129,6 +163,9 @@ window.BioUI = class BioUI {
     }
   }
 
+  /**
+   * Populates the language selection dropdown from available UI translations.
+   */
   populateLanguageDropdown() {
     this.languageSelect.innerHTML = "";
     for (const [key, language] of Object.entries(window.BioConfig.uiText)) {
@@ -139,6 +176,11 @@ window.BioUI = class BioUI {
     }
   }
 
+  /**
+   * Binds event listeners for all interactive controls: panel toggle, model run,
+   * language switch, custom model input, confidence/overlap sliders, cache clearing,
+   * log clearing, and CSV export.
+   */
   setupEventListeners() {
     // Toggle Panel Minimization
     document.getElementById("bio-header").addEventListener("click", () => {
@@ -267,6 +309,12 @@ window.BioUI = class BioUI {
     });
   }
 
+  /**
+   * Appends a message to the log area, with optional in-place update.
+   * Auto-scrolls to the bottom if the user was already scrolled near the end.
+   * @param {string} msg - HTML content to display.
+   * @param {string|null} [updateId=null] - If provided, updates an existing entry with this DOM id instead of appending.
+   */
   log(msg, updateId = null) {
     if (!this.logArea) return;
 
@@ -299,6 +347,10 @@ window.BioUI = class BioUI {
     }
   }
 
+  /**
+   * Exports the most recent analysis detections as a CSV file download.
+   * The CSV includes start_time, end_time, species, and confidence columns.
+   */
   exportDetections() {
     if (!window.lastAnalysisData) {
       this.log(`${this.uiInputText.noDetectionsToExport}`);

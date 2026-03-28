@@ -1,6 +1,14 @@
 // background.js
 const api = typeof browser !== "undefined" ? browser : chrome;
 
+/**
+ * Listens for one-shot messages from content scripts.
+ * Supports FETCH_AUDIO (binary as base64) and FETCH_JSON (parsed JSON) requests.
+ * @param {Object} request - Message payload with a `type` field and a `url`.
+ * @param {Object} sender - Sender metadata (unused).
+ * @param {Function} sendResponse - Callback to return the result to the content script.
+ * @returns {boolean} `true` to keep the message channel open for the async response.
+ */
 api.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Handle Audio Fetching
@@ -31,6 +39,12 @@ api.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 1. The open port keeps the MV3 service worker alive during long downloads
 // 2. Chunked transfer avoids memory spikes from base64-encoding the whole file
 // 3. Enables progress reporting back to the content script
+/**
+ * Handles long-lived port connections for streaming large file downloads.
+ * Uses flow control (ACK per chunk) to prevent message queue overflow in Firefox.
+ * The content script opens a port named "download" and sends `{ url }` to start.
+ * @param {chrome.runtime.Port} port - The connected port from the content script.
+ */
 api.runtime.onConnect.addListener((port) => {
   if (port.name !== "download") return;
 
@@ -106,7 +120,13 @@ api.runtime.onConnect.addListener((port) => {
   });
 });
 
-// Efficient Base64 encoding for Uint8Array
+/**
+ * Encodes a Uint8Array to a base64 string.
+ * Processes in 32 KB sub-blocks to avoid exceeding the call stack size limit
+ * of `String.fromCharCode.apply`.
+ * @param {Uint8Array} bytes - The binary data to encode.
+ * @returns {string} Base64-encoded string.
+ */
 function uint8ToBase64(bytes) {
   const BLOCK = 0x8000; // 32KB sub-blocks to avoid call stack limits
   let binary = "";
@@ -116,7 +136,13 @@ function uint8ToBase64(bytes) {
   return btoa(binary);
 }
 
-// Helper for small binary fetches (audio files)
+/**
+ * Fetches a URL and returns its contents as a base64-encoded string.
+ * Suitable for small binary files (e.g. audio clips); for large files use
+ * the port-based streaming download instead.
+ * @param {string} url - The URL to fetch.
+ * @returns {Promise<string>} Base64-encoded response body.
+ */
 async function fetchAsBase64(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);

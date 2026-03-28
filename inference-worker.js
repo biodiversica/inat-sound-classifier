@@ -3,8 +3,17 @@
 // Terminating this worker is the only way to reclaim WASM memory,
 // since WebAssembly.Memory can grow but never shrink.
 
+/** @type {ort.InferenceSession|null} The current ONNX Runtime inference session. */
 let session = null;
 
+/**
+ * Handles messages from the main thread.
+ * Supported message types:
+ *  - `init`      — Loads the ORT library and configures WASM paths.
+ *  - `loadModel` — Releases any existing session and creates a new one from a model buffer.
+ *  - `predict`   — Runs inference on an audio chunk and returns raw logits.
+ * @param {MessageEvent} e - Incoming message with `{ type, ... }` payload.
+ */
 self.onmessage = async function (e) {
   const { type } = e.data;
 

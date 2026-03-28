@@ -1,9 +1,21 @@
 // geo.js
+
+/**
+ * Geographic validation utilities: fetches observation coordinates,
+ * builds species bounding boxes from GBIF and iNaturalist occurrence data,
+ * and checks whether a point falls within a bounding box.
+ */
 window.BioGeo = {
+  /** @type {Object<string, {minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} GBIF bbox cache keyed by species name. */
   cache: {},
+  /** @type {Object<string, {minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} iNaturalist bbox cache keyed by species name. */
   cacheinat: {},
 
-  // Helper to abstract the messaging boilerplate
+  /**
+   * Sends a JSON fetch request through the background script to bypass CORS.
+   * @param {string} url - The URL to fetch.
+   * @returns {Promise<Object|null>} Parsed JSON data, or null on failure.
+   */
   async fetchViaBackground(url) {
     const response = await new Promise(resolve => {
       api.runtime.sendMessage({ type: "FETCH_JSON", url: url }, resolve);
@@ -16,7 +28,11 @@ window.BioGeo = {
     return response.data;
   },
 
-  // 1. Fetch iNaturalist Coordinates
+  /**
+   * Fetches the geographic coordinates of an iNaturalist observation.
+   * @param {string} obsId - The iNaturalist observation ID.
+   * @returns {Promise<{lat: number, lon: number}|null>} Coordinates, or null if unavailable.
+   */
   async getObservationCoords(obsId) {
     const url = `https://api.inaturalist.org/v1/observations/${obsId}`;
     const data = await this.fetchViaBackground(url);
@@ -30,7 +46,12 @@ window.BioGeo = {
     return { lat, lon };
   },
 
-  // 2. Fetch GBIF Data / Bounding Box
+  /**
+   * Computes a bounding box for a species from GBIF occurrence records.
+   * Results are cached to avoid redundant API calls.
+   * @param {string} speciesName - Scientific species name.
+   * @returns {Promise<{minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} Bounding box, or null if no data.
+   */
   async getSpeciesBBox(speciesName) {
     if (this.cache[speciesName]) return this.cache[speciesName];
     
@@ -80,7 +101,12 @@ window.BioGeo = {
     }
   },
 
-  // 3. Fetch iNaturalist Data / Bounding Box
+  /**
+   * Computes a bounding box for a species from iNaturalist occurrence records.
+   * Results are cached to avoid redundant API calls.
+   * @param {string} speciesName - Scientific species name.
+   * @returns {Promise<{minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} Bounding box, or null if no data.
+   */
   async getiNaturalistSpeciesBBox(speciesName) {
     if (this.cacheinat[speciesName]) return this.cacheinat[speciesName];
     
@@ -119,7 +145,12 @@ window.BioGeo = {
     }
   },
 
-  // Math check (No network requests, so this stays purely local)
+  /**
+   * Checks whether a coordinate point falls within a bounding box.
+   * @param {{lat: number, lon: number}|null} coords - The point to test.
+   * @param {{minLat:number,maxLat:number,minLon:number,maxLon:number}|null} bbox - The bounding box.
+   * @returns {boolean} `true` if the point is inside the box; `false` if either argument is null.
+   */
   isWithinBBox(coords, bbox) {
     if (!coords || !bbox) return false;
     return (

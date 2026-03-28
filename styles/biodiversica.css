@@ -182,13 +182,26 @@
 }
 
 #bio-custom-model {
-  width: 100%;
+  width: 480px;
   height: 40px;
   background: #fcfee5ff;
   margin-top: 5px;
   font-size: 10px;
   border: 1px solid #118b50;
   box-sizing: border-box;
+}
+
+.bio-custom-model-instructions {
+  display: flex;
+  justify-content: space-between;
+  align-items: left;
+  gap: 10px;
+}
+
+.bio-custom-model-instructions a {
+  font-size: 10px;
+  color: #118b50;
+  text-decoration: none;
 }
 
 #bio-add-custom-btn {

@@ -8,5 +8,6 @@ window.BioConfig = {
   speciesCellWidth: 32,
   confidenceCellWidth: 12,
   dynamicPageInterval: 2000,
-  modelCacheLabel: "bioacoustic-models-v1"
+  modelCacheLabel: "bioacoustic-models-v1",
+  exampleCustomModelLink: "https://github.com/biodiversica/inat-sound-classifier/raw/refs/heads/main/model_zoo/birdnet_v2.4.json"
 };

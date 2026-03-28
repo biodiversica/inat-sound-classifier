@@ -95,7 +95,11 @@ window.BioUI = class BioUI {
               <details>
                 <summary class="bio-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModelSettings}</summary>
                 <textarea id="bio-custom-model" placeholder='{"name": "custom-model-name", "version": 1.0, ...}'></textarea>
-                <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
+                <div class="bio-custom-model-instructions">
+                  <a href=${window.BioConfig.exampleCustomModelLink} target="_blank"><u>${inputText.customModelInstructions}</u></a>
+                  <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
+                </div>
+                
               </details>
             </div>
             <div class="bio-setting-row" style="justify-content: center;">

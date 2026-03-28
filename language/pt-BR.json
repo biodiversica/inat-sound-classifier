@@ -12,6 +12,7 @@
   "overlapHelp": "Porcentagem de sobreposição entre as janelas temporais de análise dentro da observação sonora.",
   "customModelHelp": "Adicione um modelo personalizado fornecendo todas as propriedades do modelo seguindo o formato JSON abaixo.",
   "addCustomButton": "Adicionar à Lista",
+  "customModelInstructions": "Como adicionar modelos personalizados?",
   "clearLogsButton": "Limpar Console",
   "exportButton": "Exportar Resultados",
   "setLanguage": "Idioma:",

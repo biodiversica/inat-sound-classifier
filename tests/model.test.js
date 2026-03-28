@@ -145,6 +145,14 @@ describe('BioModelEngine', () => {
       expect(result[0]).toBeGreaterThan(result[1]);
       expect(result[1]).toBeGreaterThan(result[2]);
     });
+
+    test('should not produce NaN/Infinity for large logits', () => {
+      const result = engine.softmax([1000, 1001, 999]);
+      const sum = result.reduce((a, b) => a + b, 0);
+      expect(sum).toBeCloseTo(1.0);
+      expect(result.every(x => isFinite(x))).toBe(true);
+      expect(result[1]).toBeGreaterThan(result[0]);
+    });
   });
 
   describe('terminateWorker', () => {

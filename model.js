@@ -212,7 +212,8 @@ window.BioModelEngine = class BioModelEngine {
   sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
 
   softmax(logits) {
-    const exps = logits.map(x => Math.exp(x));
+    const max = logits.reduce((a, b) => Math.max(a, b), -Infinity);
+    const exps = logits.map(x => Math.exp(x - max));
     const sum = exps.reduce((a, b) => a + b, 0);
     return exps.map(x => x / sum);
   }

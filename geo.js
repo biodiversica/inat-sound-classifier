@@ -1,4 +1,4 @@
-// geo.js 
+// geo.js
 window.BioGeo = {
   cache: {},
   cacheinat: {},
@@ -6,7 +6,7 @@ window.BioGeo = {
   // Helper to abstract the messaging boilerplate
   async fetchViaBackground(url) {
     const response = await new Promise(resolve => {
-      chrome.runtime.sendMessage({ type: "FETCH_JSON", url: url }, resolve);
+      api.runtime.sendMessage({ type: "FETCH_JSON", url: url }, resolve);
     });
 
     if (!response.success) {

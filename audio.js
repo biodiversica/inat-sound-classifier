@@ -4,7 +4,7 @@ window.BioAudio = {
     
     const apiURL = `https://api.inaturalist.org/v1/observations/${obsId}?include=sounds`;
     const response = await new Promise(resolve => {
-      chrome.runtime.sendMessage({ type: "FETCH_JSON", url: apiURL }, resolve);
+      api.runtime.sendMessage({ type: "FETCH_JSON", url: apiURL }, resolve);
     });
 
     if (!response.success) {
@@ -21,7 +21,7 @@ window.BioAudio = {
   async decodeAudio(url) {
     // Ask background.js to fetch the file
     const response = await new Promise(resolve => {
-      chrome.runtime.sendMessage({ type: "FETCH_AUDIO", url: url }, resolve);
+      api.runtime.sendMessage({ type: "FETCH_AUDIO", url: url }, resolve);
     });
 
     if (!response.success) {

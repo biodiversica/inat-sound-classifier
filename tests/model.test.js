@@ -1,11 +1,13 @@
 /** @jest-environment jsdom */
 
-// Mock chrome API and caches before loading model.js
+// Mock chrome API and the api shim before loading model.js.
+// In the real extension, config.js (loaded first) declares the global `api`.
 window.chrome = {
   runtime: {
     getURL: jest.fn(path => `chrome-extension://fakeid/${path}`)
   }
 };
+global.api = window.chrome;
 
 global.caches = {
   open: jest.fn()

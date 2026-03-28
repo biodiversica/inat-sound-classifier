@@ -9,11 +9,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://api.inaturalist.org/*",
-    "https://static.inaturalist.org/*",
-    "https://huggingface.co/*",
-    "https://zenodo.org/*",
-    "https://api.gbif.org/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"

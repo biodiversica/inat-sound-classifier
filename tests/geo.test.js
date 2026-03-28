@@ -1,11 +1,19 @@
 // tests/geo.test.js
 
+// Set up chrome mock and the api shim BEFORE loading the module.
+// In the real extension, config.js (loaded first) declares the global `api`.
+global.chrome = {
+  runtime: {
+    sendMessage: jest.fn()
+  }
+};
+global.api = global.chrome;
+
 // 1. Mock the window object since Node.js doesn't have one
 global.window = {};
 
 // 2. Load your actual extension file into the test environment
-// (Assuming geo.js is in the root directory)
-require('../geo.js'); 
+require('../geo.js');
 
 describe('BioGeo Geographic Validation', () => {
   const bbox = { minLat: 10, maxLat: 50, minLon: -100, maxLon: -50 };

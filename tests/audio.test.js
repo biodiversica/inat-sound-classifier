@@ -1,33 +1,33 @@
 /** @jest-environment jsdom */
 
+// Set up chrome mock and the api shim BEFORE loading the module.
+// In the real extension, config.js (loaded first) declares the global `api`.
+window.chrome = {
+  runtime: {
+    sendMessage: jest.fn()
+  }
+};
+global.api = window.chrome;
+
+// Mock AudioContext on the window object
+window.AudioContext = jest.fn().mockImplementation(() => ({
+  decodeAudioData: jest.fn().mockResolvedValue({
+    sampleRate: 48000,
+    duration: 10,
+    getChannelData: () => new Float32Array(48000 * 10)
+  }),
+  close: jest.fn().mockResolvedValue()
+}));
+
+// Polyfill atob if it's missing in your JSDOM version
+if (typeof window.atob === 'undefined') {
+  window.atob = (str) => Buffer.from(str, 'base64').toString('binary');
+}
+
 // Import source code so it attaches to the window object
 require('../audio.js');
 
 describe('BioAudio Module', () => {
-  beforeAll(() => {
-    // 1. Initialize chrome mock on the window object
-    window.chrome = {
-      runtime: {
-        sendMessage: jest.fn()
-      }
-    };
-
-    // 2. Mock AudioContext on the window object
-    window.AudioContext = jest.fn().mockImplementation(() => ({
-      decodeAudioData: jest.fn().mockResolvedValue({
-        sampleRate: 48000,
-        duration: 10,
-        getChannelData: () => new Float32Array(48000 * 10)
-      }),
-      close: jest.fn().mockResolvedValue()
-    }));
-
-    // Polyfill atob if it's missing in your JSDOM version
-    if (typeof window.atob === 'undefined') {
-      window.atob = (str) => Buffer.from(str, 'base64').toString('binary');
-    }
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
 

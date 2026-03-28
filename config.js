@@ -1,4 +1,8 @@
 // config.js
+// Browser API shim: Chrome uses chrome.*, Firefox uses browser.*.
+// Defined once here (loaded first) and shared across all content scripts.
+const api = typeof browser !== "undefined" ? browser : chrome;
+
 window.BioConfig = {
   modelRegistry: {},
   uiText: {},

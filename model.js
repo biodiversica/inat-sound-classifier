@@ -51,7 +51,7 @@ window.BioModelEngine = class BioModelEngine {
       // This bypasses CORS (content scripts run under the page's origin)
       // and keeps the MV3 service worker alive during large downloads.
       const uint8Array = await new Promise((resolve, reject) => {
-        const port = chrome.runtime.connect({ name: "download" });
+        const port = api.runtime.connect({ name: "download" });
         const chunks = [];
         let totalSize = 0;
 
@@ -70,6 +70,8 @@ window.BioModelEngine = class BioModelEngine {
               const pct = Math.round((msg.downloaded / totalSize) * 100);
               this.ui.log(`${this.ui.uiInputText.downloadingModel}... ${pct}%`, "download-progress");
             }
+            // ACK so the background sends the next chunk (flow control)
+            port.postMessage({ type: "ack" });
           } else if (msg.type === "done") {
             const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
             const combined = new Uint8Array(totalLength);
@@ -87,8 +89,8 @@ window.BioModelEngine = class BioModelEngine {
         });
 
         port.onDisconnect.addListener(() => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
+          if (api.runtime.lastError) {
+            reject(new Error(api.runtime.lastError.message));
           }
         });
 
@@ -116,7 +118,7 @@ window.BioModelEngine = class BioModelEngine {
   // Create a Web Worker using a blob URL for CSP compatibility
   _createWorker() {
     return new Promise((resolve, reject) => {
-      const workerScriptUrl = chrome.runtime.getURL("inference-worker.js");
+      const workerScriptUrl = api.runtime.getURL("inference-worker.js");
       // Fetch the worker script and create a blob URL so it runs
       // under the page's origin, avoiding content script CSP issues
       fetch(workerScriptUrl)
@@ -137,8 +139,8 @@ window.BioModelEngine = class BioModelEngine {
           };
 
           // Initialize ORT inside the worker
-          const ortUrl = chrome.runtime.getURL("onnx/ort.min.js");
-          const wasmPaths = chrome.runtime.getURL("onnx/");
+          const ortUrl = api.runtime.getURL("onnx/ort.min.js");
+          const wasmPaths = api.runtime.getURL("onnx/");
           this._sendMessage({ type: "init", ortUrl, wasmPaths })
             .then(() => resolve())
             .catch(reject);

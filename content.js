@@ -40,13 +40,13 @@
 
     try {
       // 1. Fetch the index of available models
-      const indexUrl = chrome.runtime.getURL("model_zoo/index.json");
+      const indexUrl = api.runtime.getURL("model_zoo/index.json");
       const indexRes = await fetch(indexUrl);
       const modelFiles = await indexRes.json();
 
       // 2. Fetch and evaluate each model
       for (const file of modelFiles) {
-        const modelUrl = chrome.runtime.getURL(`model_zoo/${file}`);
+        const modelUrl = api.runtime.getURL(`model_zoo/${file}`);
         const modelRes = await fetch(modelUrl);
         const modelData = await modelRes.json();
 
@@ -95,12 +95,12 @@
     window.BioConfig.uiText = {}; // Clear existing
 
     try {
-      const indexUrl = chrome.runtime.getURL("language/index.json");
+      const indexUrl = api.runtime.getURL("language/index.json");
       const indexRes = await fetch(indexUrl);
       const languageFiles = await indexRes.json();
 
       for (const file of languageFiles) {
-        const languageUrl = chrome.runtime.getURL(`language/${file}`);
+        const languageUrl = api.runtime.getURL(`language/${file}`);
         const languageRes = await fetch(languageUrl);
         const languageData = await languageRes.json();
 

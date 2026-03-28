@@ -1,6 +1,7 @@
 // background.js
+const api = typeof browser !== "undefined" ? browser : chrome;
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+api.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Handle Audio Fetching
   if (request.type === "FETCH_AUDIO") {
@@ -30,10 +31,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 1. The open port keeps the MV3 service worker alive during long downloads
 // 2. Chunked transfer avoids memory spikes from base64-encoding the whole file
 // 3. Enables progress reporting back to the content script
-chrome.runtime.onConnect.addListener((port) => {
+api.runtime.onConnect.addListener((port) => {
   if (port.name !== "download") return;
 
   port.onMessage.addListener(async (msg) => {
+    if (msg.type === "ack") return; // handled by waitForAck
+
     try {
       const response = await fetch(msg.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -41,9 +44,17 @@ chrome.runtime.onConnect.addListener((port) => {
       const total = parseInt(response.headers.get("content-length") || "0", 10);
       port.postMessage({ type: "size", total });
 
-      // Stream the response body — never buffer the entire file.
-      // Batch network chunks into ~1MB before sending to reduce
-      // message overhead while keeping memory usage low.
+      // Flow-controlled streaming: wait for the content script to ACK
+      // each chunk before sending the next. This prevents Firefox's
+      // port message queue from growing unbounded on large downloads.
+      let ackResolve = null;
+      const onAck = (m) => { if (m.type === "ack" && ackResolve) ackResolve(); };
+      port.onMessage.addListener(onAck);
+
+      function waitForAck() {
+        return new Promise((resolve) => { ackResolve = resolve; });
+      }
+
       const reader = response.body.getReader();
       const BATCH_SIZE = 1024 * 1024;
       let pending = [];
@@ -66,6 +77,7 @@ chrome.runtime.onConnect.addListener((port) => {
             offset += chunk.length;
           }
           port.postMessage({ type: "chunk", data: uint8ToBase64(combined), downloaded });
+          await waitForAck();
           pending = [];
           pendingSize = 0;
         }
@@ -80,6 +92,7 @@ chrome.runtime.onConnect.addListener((port) => {
           offset += chunk.length;
         }
         port.postMessage({ type: "chunk", data: uint8ToBase64(combined), downloaded });
+        await waitForAck();
       }
 
       port.postMessage({ type: "done" });

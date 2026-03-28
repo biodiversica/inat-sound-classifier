@@ -1,5 +1,5 @@
 /* inaturalist.css - Adapted for iNaturalist.org color scheme */
-#bio-model-panel {
+#insc-model-panel {
   position: fixed;
   bottom: 10px;
   right: 10px;
@@ -18,11 +18,11 @@
   transition: width 0.2s ease-in-out;
 }
 
-#bio-model-panel.minimized {
+#insc-model-panel.minimized {
   width: 250px;
 }
 
-#bio-header {
+#insc-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -33,25 +33,25 @@
   border-bottom: 1px solid #cccccc;
 }
 
-#bio-toggle-btn {
+#insc-toggle-btn {
   font-weight: bold;
   font-size: 16px;
 }
 
-#bio-content-wrapper {
+#insc-content-wrapper {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 10px;
 }
 
-.bio-controls-row {
+.insc-controls-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-#bio-model-select {
+#insc-model-select {
   background: #74ac00;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -61,11 +61,11 @@
   font-size: 12px;
 }
 
-#bio-model-select:hover {
+#insc-model-select:hover {
   background: #a5d6a7;
 }
 
-#bio-language-select {
+#insc-language-select {
   background: #74ac00;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -75,11 +75,11 @@
   font-size: 12px;
 }
 
-#bio-language-select:hover {
+#insc-language-select:hover {
   background: #a5d6a7;
 }
 
-#bio-run-btn {
+#insc-run-btn {
   background: #007bff;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -90,12 +90,12 @@
   font-size: 12px;
 }
 
-#bio-run-btn:hover {
+#insc-run-btn:hover {
   background: #0056b3;
   border-color: #007bff;
 }
 
-#bio-clear-btn {
+#insc-clear-btn {
   background: #dc3545;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -106,12 +106,12 @@
   padding: 3px 8px;
 }
 
-#bio-clear-btn:hover {
+#insc-clear-btn:hover {
   border-color: #dc3545;
   background: #c82333;
 }
 
-#bio-export-btn {
+#insc-export-btn {
   background: #007bff;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -123,12 +123,12 @@
   margin-right: 5px;
 }
 
-#bio-export-btn:hover {
+#insc-export-btn:hover {
   background: #0056b3;
   border-color: #007bff;
 }
 
-#bio-clear-cache-btn {
+#insc-clear-cache-btn {
   background: #dc3545;
   color: #ffffff;
   border: 1px solid #cccccc;
@@ -139,19 +139,19 @@
   padding: 3px 8px;
 }
 
-#bio-clear-cache-btn:hover {
+#insc-clear-cache-btn:hover {
   border-color: #dc3545;
   background: #c82333;
 }
 
-#bio-settings-panel {
+#insc-settings-panel {
   border: 1px dashed #74ac00;
   padding: 8px;
   margin-bottom: 8px;
   background: #f8f9fa;
 }
 
-.bio-setting-row {
+.insc-setting-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -162,26 +162,26 @@
   padding-bottom: 5px;
 }
 
-.bio-setting-row:last-child {
+.insc-setting-row:last-child {
   margin-bottom: 0;
   border-bottom: none;
 }
 
 /* Force the sliders to be green */
-.bio-setting-row input[type=range] {
+.insc-setting-row input[type=range] {
   width: 120px;
   accent-color: #74ac00 !important;
   cursor: ew-resize;
 }
 
-.bio-custom-summary {
+.insc-custom-summary {
   cursor: pointer;
   color: #333333;
   margin-bottom: 5px;
   font-family: 'Courier New', monospace !important;
 }
 
-#bio-custom-model {
+#insc-custom-model {
   width: 480px;
   height: 40px;
   background: #ffffff;
@@ -191,20 +191,20 @@
   box-sizing: border-box;
 }
 
-.bio-custom-model-instructions {
+.insc-custom-model-instructions {
   display: flex;
   justify-content: space-between;
   align-items: left;
   gap: 10px;
 }
 
-.bio-custom-model-instructions a {
+.insc-custom-model-instructions a {
   font-size: 10px;
   color: #007bff;
   text-decoration: none;
 }
 
-#bio-add-custom-btn {
+#insc-add-custom-btn {
   background: #74ac00;
   color: #ffffff;
   border: none;
@@ -215,11 +215,11 @@
   font-size: 12px;
 }
 
-#bio-add-custom-btn:hover {
+#insc-add-custom-btn:hover {
   background: #a5d6a7;
 }
 
-#bio-log-area {
+#insc-log-area {
   max-height: 250px;
   overflow-y: auto;
   border-top: 1px solid #cccccc;
@@ -234,62 +234,62 @@
   background: #f8f9fa;
 }
 
-.bio-log-entry {
+.insc-log-entry {
   border-bottom: 1px solid #e9ecef;
   padding: 3px 0;
 }
 
 /* Result-specific styles */
-.bio-link-model { 
+.insc-link-model { 
     color: #007bff !important; 
     text-decoration: none; 
 }
-.bio-link-taxa { 
+.insc-link-taxa { 
     background: #74ac00 !important; 
     color: #ffffff; 
     text-decoration: underline; 
     font-style: italic; 
 }
-.bio-link-taxa-soft { 
+.insc-link-taxa-soft { 
     background: #a5d6a7 !important; 
     color: #333333; 
     text-decoration: underline; 
     font-style: italic; 
 }
-.bio-line-header { 
+.insc-line-header { 
     background: #007bff !important; 
     color: #ffffff;
     font-weight: bold; 
     display: block; 
     margin-top: 10px; 
 }
-.bio-geo-match { 
+.insc-geo-match { 
     color: #ffffff; 
     background: #74ac00 !important; 
 }
-.bio-geo-mismatch { 
+.insc-geo-mismatch { 
     color: #dc3545 !important; 
 }
-.bio-geo-warning { 
+.insc-geo-warning { 
     background: #dc3545; 
     color: #ffffff !important; 
 }
-.bio-error { 
+.insc-error { 
     color: #dc3545 !important; 
 }
-.bio-separator { 
+.insc-separator { 
     border-top: 1px dashed #cccccc; 
     margin: 5px 0; 
     display: block; 
 }
 
-.bio-bottom-controls {
+.insc-bottom-controls {
   text-align: right !important;
   padding: 5px;
 }
 
 /* Container for the tooltip */
-.bio-help {
+.insc-help {
   position: relative;
   cursor: help;
   /* Visual cue that help is available */
@@ -297,7 +297,7 @@
 }
 
 /* The actual tooltip box */
-.bio-help:after {
+.insc-help:after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 0%; /* Position above the text */
@@ -324,7 +324,7 @@
 }
 
 /* Show on hover */
-.bio-help:hover:after {
+.insc-help:hover:after {
   visibility: visible;
   opacity: 1;
 }

@@ -16,7 +16,7 @@ global.caches = {
 // Load source
 require('../model.js');
 
-describe('BioModelEngine', () => {
+describe('iNatSCModelEngine', () => {
   let engine;
   const mockUi = {
     log: jest.fn(),
@@ -42,7 +42,7 @@ describe('BioModelEngine', () => {
   };
 
   beforeEach(() => {
-    engine = new window.BioModelEngine(mockUi);
+    engine = new window.iNatSCModelEngine(mockUi);
     jest.clearAllMocks();
   });
 

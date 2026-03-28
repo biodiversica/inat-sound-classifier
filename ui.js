@@ -4,7 +4,7 @@
  * Manages the extension's UI panel injected into iNaturalist observation pages.
  * Handles model/language dropdowns, settings sliders, log output, and CSV export.
  */
-window.BioUI = class BioUI {
+window.iNatSCUI = class iNatSCUI {
   /**
    * Creates and injects the UI panel into the page.
    * @param {Function} onRunCallback - Called when the user clicks "Run Analysis" with `(modelConfig, languageConfig)`.
@@ -21,17 +21,17 @@ window.BioUI = class BioUI {
     this.injectPanel(this.uiInputText);
     
     // Cache DOM elements for easy access later
-    this.panel = document.getElementById("bio-model-panel");
-    this.content = document.getElementById("bio-content-wrapper");
-    this.toggleBtn = document.getElementById("bio-toggle-btn");
-    this.logArea = document.getElementById("bio-log-area");
-    this.modelSelect = document.getElementById("bio-model-select");
-    this.languageSelect = document.getElementById("bio-language-select");
-    this.runBtn = document.getElementById("bio-run-btn");
-    this.customModelInput = document.getElementById("bio-custom-model");
-    this.addCustomBtn = document.getElementById("bio-add-custom-btn");
-    this.exportBtn = document.getElementById("bio-export-btn");
-    this.clearCacheBtn = document.getElementById("bio-clear-cache-btn");
+    this.panel = document.getElementById("insc-model-panel");
+    this.content = document.getElementById("insc-content-wrapper");
+    this.toggleBtn = document.getElementById("insc-toggle-btn");
+    this.logArea = document.getElementById("insc-log-area");
+    this.modelSelect = document.getElementById("insc-model-select");
+    this.languageSelect = document.getElementById("insc-language-select");
+    this.runBtn = document.getElementById("insc-run-btn");
+    this.customModelInput = document.getElementById("insc-custom-model");
+    this.addCustomBtn = document.getElementById("insc-add-custom-btn");
+    this.exportBtn = document.getElementById("insc-export-btn");
+    this.clearCacheBtn = document.getElementById("insc-clear-cache-btn");
     
     // Setup initial state
     this.populateDropdown();
@@ -73,7 +73,7 @@ window.BioUI = class BioUI {
    * Removes all entries from the log area.
    */
   clearLog() {
-    const logArea = document.getElementById("bio-log-area");
+    const logArea = document.getElementById("insc-log-area");
     if (logArea) {
       logArea.innerHTML = ""; // This physically removes the text from the UI
     }
@@ -86,63 +86,63 @@ window.BioUI = class BioUI {
    */
   injectPanel(inputText) {
     // Prevent duplicate panels if the script runs twice
-    if (document.getElementById("bio-model-panel")) return;
+    if (document.getElementById("insc-model-panel")) return;
 
     const panelDiv = document.createElement("div");
-    panelDiv.id = "bio-model-panel";
+    panelDiv.id = "insc-model-panel";
     
     panelDiv.innerHTML = `
-      <div id="bio-header">
+      <div id="insc-header">
         <b>${inputText.extensionName}</b>
-        <span id="bio-toggle-btn">−</span>
+        <span id="insc-toggle-btn">−</span>
       </div>
       
-      <div id="bio-content-wrapper">
-        <div class="bio-controls-row">
+      <div id="insc-content-wrapper">
+        <div class="insc-controls-row">
           <div>
-            <span class="bio-help" data-tooltip="${inputText.bioacousticModelHelp}"><b>${inputText.bioacousticModel}</b></span>
-            <select id="bio-model-select"></select>
-            <button id="bio-run-btn">${inputText.analysisButton}</button>
+            <span class="insc-help" data-tooltip="${inputText.bioacousticModelHelp}"><b>${inputText.bioacousticModel}</b></span>
+            <select id="insc-model-select"></select>
+            <button id="insc-run-btn">${inputText.analysisButton}</button>
           </div>
         </div>
         
         <details>
-          <summary class="bio-custom-summary">${inputText.advancedSettings}</summary>
-          <div id="bio-settings-panel">
-            <div class="bio-setting-row">
-              <label class="bio-help" data-tooltip="${inputText.confidenceHelp}">${inputText.confidence}<span id="bio-conf-val"></span></label>
-              <input type="range" id="bio-conf-slider" min="0.05" max="0.95" step="0.05">
+          <summary class="insc-custom-summary">${inputText.advancedSettings}</summary>
+          <div id="insc-settings-panel">
+            <div class="insc-setting-row">
+              <label class="insc-help" data-tooltip="${inputText.confidenceHelp}">${inputText.confidence}<span id="insc-conf-val"></span></label>
+              <input type="range" id="insc-conf-slider" min="0.05" max="0.95" step="0.05">
             </div>
-            <div class="bio-setting-row">
-              <label class="bio-help" data-tooltip="${inputText.overlapHelp}">${inputText.overlap}<span id="bio-overlap-val"></span></label>
-              <input type="range" id="bio-overlap-slider" min="0" max="90" step="10">
+            <div class="insc-setting-row">
+              <label class="insc-help" data-tooltip="${inputText.overlapHelp}">${inputText.overlap}<span id="insc-overlap-val"></span></label>
+              <input type="range" id="insc-overlap-slider" min="0" max="90" step="10">
             </div>
-            <div class="bio-setting-row">
-              <span class="bio-help" data-tooltip="${inputText.setLanguageHelp}">${inputText.setLanguage}</span>
-              <select id="bio-language-select"></select>
+            <div class="insc-setting-row">
+              <span class="insc-help" data-tooltip="${inputText.setLanguageHelp}">${inputText.setLanguage}</span>
+              <select id="insc-language-select"></select>
             </div>
             
-            <div class="bio-setting-row">
+            <div class="insc-setting-row">
               <details>
-                <summary class="bio-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModelSettings}</summary>
-                <textarea id="bio-custom-model" placeholder='{"name": "custom-model-name", "version": 1.0, ...}'></textarea>
-                <div class="bio-custom-model-instructions">
-                  <a href=${window.BioConfig.exampleCustomModelLink} target="_blank"><u>${inputText.customModelInstructions}</u></a>
-                  <button id="bio-add-custom-btn">${inputText.addCustomButton}</button>
+                <summary class="insc-help" data-tooltip="${inputText.customModelHelp}">${inputText.customModelSettings}</summary>
+                <textarea id="insc-custom-model" placeholder='{"name": "custom-model-name", "version": 1.0, ...}'></textarea>
+                <div class="insc-custom-model-instructions">
+                  <a href=${window.iNatSCConfig.exampleCustomModelLink} target="_blank"><u>${inputText.customModelInstructions}</u></a>
+                  <button id="insc-add-custom-btn">${inputText.addCustomButton}</button>
                 </div>
                 
               </details>
             </div>
-            <div class="bio-setting-row" style="justify-content: center;">
-              <button id="bio-clear-cache-btn">${inputText.clearCacheButton}</button>
+            <div class="insc-setting-row" style="justify-content: center;">
+              <button id="insc-clear-cache-btn">${inputText.clearCacheButton}</button>
             </div>
           </div>
         </details>
         
-        <div id="bio-log-area"></div>
-        <div class="bio-bottom-controls"> 
-          <button id="bio-export-btn">${inputText.exportButton}</button>
-          <button id="bio-clear-btn">${inputText.clearLogsButton}</button>
+        <div id="insc-log-area"></div>
+        <div class="insc-bottom-controls"> 
+          <button id="insc-export-btn">${inputText.exportButton}</button>
+          <button id="insc-clear-btn">${inputText.clearLogsButton}</button>
         </div>
       </div>
     `;
@@ -155,7 +155,7 @@ window.BioUI = class BioUI {
    */
   populateDropdown() {
     this.modelSelect.innerHTML = "";
-    for (const [key, model] of Object.entries(window.BioConfig.modelRegistry)) {
+    for (const [key, model] of Object.entries(window.iNatSCConfig.modelRegistry)) {
       const option = document.createElement("option");
       option.value = key;
       option.text = `${model.name} v${model.version}`;
@@ -168,7 +168,7 @@ window.BioUI = class BioUI {
    */
   populateLanguageDropdown() {
     this.languageSelect.innerHTML = "";
-    for (const [key, language] of Object.entries(window.BioConfig.uiText)) {
+    for (const [key, language] of Object.entries(window.iNatSCConfig.uiText)) {
       const option = document.createElement("option");
       option.value = key;
       option.text = `${language.language}`;
@@ -183,7 +183,7 @@ window.BioUI = class BioUI {
    */
   setupEventListeners() {
     // Toggle Panel Minimization
-    document.getElementById("bio-header").addEventListener("click", () => {
+    document.getElementById("insc-header").addEventListener("click", () => {
       const isHidden = this.content.style.display === "none";
       
       this.content.style.display = isHidden ? "flex" : "none";
@@ -198,14 +198,14 @@ window.BioUI = class BioUI {
     });
 
     // Ensure the dropdown displays the currently active language
-    this.languageSelect.value = localStorage.getItem('bio-language') || 'en';
+    this.languageSelect.value = localStorage.getItem('insc-language') || 'en';
 
     // Listen for the user changing the language
     this.languageSelect.addEventListener("change", (e) => {
       const newLangKey = e.target.value;
       
       // Save the new choice to the browser
-      localStorage.setItem('bio-language', newLangKey);
+      localStorage.setItem('insc-language', newLangKey);
 
       // --- THE "SOFT RESET" TRICK ---
       // Physically remove the UI from the webpage
@@ -224,14 +224,14 @@ window.BioUI = class BioUI {
     // Run Analysis Button
     this.runBtn.addEventListener("click", () => {
       const selectedKey = this.modelSelect.value;
-      const modelConfig = window.BioConfig.modelRegistry[selectedKey];
+      const modelConfig = window.iNatSCConfig.modelRegistry[selectedKey];
       const selectedLanguageKey = this.languageSelect.value;
-      const languageConfig = window.BioConfig.uiText[selectedLanguageKey];
+      const languageConfig = window.iNatSCConfig.uiText[selectedLanguageKey];
       this.onRunCallback(modelConfig, languageConfig);
     });
 
     // Clear Logs Button
-    const clearBtn = document.getElementById("bio-clear-btn");
+    const clearBtn = document.getElementById("insc-clear-btn");
     clearBtn.addEventListener("click", () => {
       this.clearLog();
       this.log(`${this.uiInputText.initLog} <b>'${this.uiInputText.analysisButton}'</b>`);
@@ -245,7 +245,7 @@ window.BioUI = class BioUI {
     // Clear Cache Button
     this.clearCacheBtn.addEventListener("click", async () => {
       try {
-        const deleted = await caches.delete(window.BioConfig.modelCacheLabel);
+        const deleted = await caches.delete(window.iNatSCConfig.modelCacheLabel);
         if (deleted) {
           this.log(this.uiInputText.cacheCleared);
         } else {
@@ -261,12 +261,12 @@ window.BioUI = class BioUI {
       try {
         const customJson = JSON.parse(this.customModelInput.value);
         const key = "custom_" + Date.now();
-        window.BioConfig.modelRegistry[key] = customJson;
+        window.iNatSCConfig.modelRegistry[key] = customJson;
         
         // Save to localStorage
-        const customModels = JSON.parse(localStorage.getItem('bio-custom-models') || '{}');
+        const customModels = JSON.parse(localStorage.getItem('insc-custom-models') || '{}');
         customModels[key] = customJson;
-        localStorage.setItem('bio-custom-models', JSON.stringify(customModels));
+        localStorage.setItem('insc-custom-models', JSON.stringify(customModels));
         
         this.populateDropdown();
         this.modelSelect.value = key;
@@ -279,33 +279,33 @@ window.BioUI = class BioUI {
     });
 
     // --- Confidence Slider Logic ---
-    const confSlider = document.getElementById("bio-conf-slider");
-    const confVal = document.getElementById("bio-conf-val");
+    const confSlider = document.getElementById("insc-conf-slider");
+    const confVal = document.getElementById("insc-conf-val");
     
     // Set initial slider position based on the default config
-    confSlider.value = window.BioConfig.confidenceThreshold;
+    confSlider.value = window.iNatSCConfig.confidenceThreshold;
     confVal.innerText = parseFloat(confSlider.value).toFixed(2);
 
     // Listen for drags and update the config live
     confSlider.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       confVal.innerText = val.toFixed(2);
-      window.BioConfig.confidenceThreshold = val;
+      window.iNatSCConfig.confidenceThreshold = val;
     });
 
     // --- Overlap Slider Logic ---
-    const overlapSlider = document.getElementById("bio-overlap-slider");
-    const overlapVal = document.getElementById("bio-overlap-val");
+    const overlapSlider = document.getElementById("insc-overlap-slider");
+    const overlapVal = document.getElementById("insc-overlap-val");
 
     // Set initial slider position
-    overlapSlider.value = window.BioConfig.overlapPercentage;
+    overlapSlider.value = window.iNatSCConfig.overlapPercentage;
     overlapVal.innerText = overlapSlider.value + "%";
 
     // Listen for drags
     overlapSlider.addEventListener("input", (e) => {
       const val = parseInt(e.target.value, 10);
       overlapVal.innerText = val + "%";
-      window.BioConfig.overlapPercentage = val / 100;
+      window.iNatSCConfig.overlapPercentage = val / 100;
     });
   }
 
@@ -331,7 +331,7 @@ window.BioUI = class BioUI {
 
     // Append the message using the CSS class
     const div = document.createElement("div");
-    div.className = "bio-log-entry";
+    div.className = "insc-log-entry";
     if (updateId) div.id = updateId;
     div.innerHTML = msg;
     this.logArea.appendChild(div);

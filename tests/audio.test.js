@@ -27,7 +27,7 @@ if (typeof window.atob === 'undefined') {
 // Import source code so it attaches to the window object
 require('../audio.js');
 
-describe('BioAudio Module', () => {
+describe('iNatSCAudio Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -42,7 +42,7 @@ describe('BioAudio Module', () => {
 
   test('decodeAudio should send message to background and return buffer', async () => {
     const url = 'https://static.inaturalist.org/sound.mp3';
-    const result = await window.BioAudio.decodeAudio(url);
+    const result = await window.iNatSCAudio.decodeAudio(url);
 
     expect(window.chrome.runtime.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({ type: "FETCH_AUDIO", url: url }),
@@ -52,12 +52,12 @@ describe('BioAudio Module', () => {
   });
 
   test('decodeAudio should throw on background fetch failure', async () => {
-    await expect(window.BioAudio.decodeAudio('https://example.com/missing.mp3'))
+    await expect(window.iNatSCAudio.decodeAudio('https://example.com/missing.mp3'))
       .rejects.toThrow('Background fetch failed');
   });
 
   test('decodeAudio should close AudioContext after decoding', async () => {
-    await window.BioAudio.decodeAudio('https://example.com/sound.mp3');
+    await window.iNatSCAudio.decodeAudio('https://example.com/sound.mp3');
     const ctxInstance = window.AudioContext.mock.results[0].value;
     expect(ctxInstance.close).toHaveBeenCalled();
   });
@@ -67,7 +67,7 @@ describe('BioAudio Module', () => {
       const sampleRate = 48000;
       const windowSize = 3; // 3 seconds
       const samples = new Float32Array(sampleRate * 9); // 9 seconds
-      const chunks = window.BioAudio.chunkAudio(samples, sampleRate, windowSize, 0);
+      const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, 0);
 
       expect(chunks.length).toBe(3);
       chunks.forEach(chunk => {
@@ -82,7 +82,7 @@ describe('BioAudio Module', () => {
       const samples = new Float32Array(sampleRate * 7);
       samples[sampleRate * 6] = 0.5; // mark a sample in the last chunk
 
-      const chunks = window.BioAudio.chunkAudio(samples, sampleRate, windowSize, 0);
+      const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, 0);
 
       expect(chunks.length).toBe(3);
       expect(chunks[2].length).toBe(sampleRate * windowSize);
@@ -96,7 +96,7 @@ describe('BioAudio Module', () => {
       const samples = new Float32Array(300); // 3 seconds
 
       // 50% overlap: step = 100 * (1 - 0.5) = 50 samples
-      const chunks = window.BioAudio.chunkAudio(samples, sampleRate, windowSize, 0.5);
+      const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, 0.5);
 
       // With step=50 and length=300: positions 0,50,100,150,200,250
       expect(chunks.length).toBe(6);
@@ -110,7 +110,7 @@ describe('BioAudio Module', () => {
       const windowSize = 3;
       const samples = new Float32Array(1000); // very short
 
-      const chunks = window.BioAudio.chunkAudio(samples, sampleRate, windowSize, 0);
+      const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, 0);
 
       expect(chunks.length).toBe(1);
       expect(chunks[0].length).toBe(sampleRate * windowSize);

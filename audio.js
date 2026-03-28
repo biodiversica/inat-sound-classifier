@@ -1,7 +1,7 @@
 // audio.js
 
 /** Audio fetching, decoding, resampling, and chunking utilities. */
-window.BioAudio = {
+window.iNatSCAudio = {
   /**
    * Queries the iNaturalist API for sound file URLs attached to an observation.
    * @param {string} obsId - The iNaturalist observation ID.

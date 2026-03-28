@@ -4,9 +4,9 @@
  * Manages ONNX model lifecycle: downloading, caching, label parsing,
  * Web Worker–based inference, and activation functions (softmax/sigmoid).
  */
-window.BioModelEngine = class BioModelEngine {
+window.iNatSCModelEngine = class iNatSCModelEngine {
   /**
-   * @param {BioUI} ui - UI instance used for logging progress and status messages.
+   * @param {iNatSCUI} ui - UI instance used for logging progress and status messages.
    */
   constructor(ui) {
     this.ui = ui;
@@ -71,7 +71,7 @@ window.BioModelEngine = class BioModelEngine {
    * @returns {Promise<ArrayBuffer|string>} The fetched data, from cache or network.
    */
   async fetchWithCache(url, type = "arrayBuffer") {
-    const cache = await caches.open(window.BioConfig.modelCacheLabel);
+    const cache = await caches.open(window.iNatSCConfig.modelCacheLabel);
     let response = await cache.match(url);
     if (!response) {
       this.ui.log(`${this.ui.uiInputText.notFoundInCache}: ${url.split('/').pop()}`);
@@ -247,7 +247,7 @@ window.BioModelEngine = class BioModelEngine {
   async loadModel(modelConfig) {
     // Check model format
     if (modelConfig.format !== 'onnx') {
-      this.ui.log(`<span class="bio-error">${this.ui.uiInputText.failedAnalysis}: ${modelConfig.format} ${this.ui.uiText.formatNotSupported}</span>`);
+      this.ui.log(`<span class="insc-error">${this.ui.uiInputText.failedAnalysis}: ${modelConfig.format} ${this.ui.uiText.formatNotSupported}</span>`);
       throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}. Only ONNX models are supported.`);
     }
 
@@ -255,16 +255,16 @@ window.BioModelEngine = class BioModelEngine {
     this.terminateWorker();
 
     this.currentModelConfig = modelConfig;
-    this.ui.log(`<span class="bio-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
+    this.ui.log(`<span class="insc-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
 
     // Print model config
-    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='bio-link-taxa'>${modelConfig.name} v${modelConfig.version}</a>`);
+    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='insc-link-taxa'>${modelConfig.name} v${modelConfig.version}</a>`);
     this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${modelConfig.windowSize}s`);
     this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
     this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
     this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
     this.ui.log(`- ${this.ui.uiInputText.activation}: ${modelConfig.activation}`);
-    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='bio-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='bio-link-taxa'><u>labels</u></a>`);
+    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='insc-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='insc-link-taxa'><u>labels</u></a>`);
 
 
     // Fetch model buffer and labels using Cache

@@ -55,7 +55,7 @@
    * @returns {Promise<void>}
    */
   async function loadGeographicModelRegistry() {
-    window.BioConfig.modelRegistry = {}; // Clear existing
+    window.iNatSCConfig.modelRegistry = {}; // Clear existing
     const obsLocation = getObservationLocation();
 
     try {
@@ -82,12 +82,12 @@
 
         if (shouldAddModel) {
           // Add to the global registry using the JSON 'id' as the key
-          window.BioConfig.modelRegistry[modelData.id] = modelData;
+          window.iNatSCConfig.modelRegistry[modelData.id] = modelData;
         }
       }
 
       // Load custom models from localStorage
-      const customModels = JSON.parse(localStorage.getItem('bio-custom-models') || '{}');
+      const customModels = JSON.parse(localStorage.getItem('insc-custom-models') || '{}');
       for (const [key, model] of Object.entries(customModels)) {
         // Apply the same geographic validation as built-in models
         let shouldAddModel = true;
@@ -100,11 +100,11 @@
         // If no bbox, it's global and should be included
 
         if (shouldAddModel) {
-          window.BioConfig.modelRegistry[key] = model;
+          window.iNatSCConfig.modelRegistry[key] = model;
         }
       }
 
-      console.log("[iNaturalist Sound Classifier] Valid models for this location:", Object.keys(window.BioConfig.modelRegistry));
+      console.log("[iNaturalist Sound Classifier] Valid models for this location:", Object.keys(window.iNatSCConfig.modelRegistry));
 
     } catch (error) {
       console.error("[iNaturalist Sound Classifier] Failed to load model registry:", error);
@@ -117,7 +117,7 @@
    * @returns {Promise<void>}
    */
   async function loadLanguageOptions() {
-    window.BioConfig.uiText = {}; // Clear existing
+    window.iNatSCConfig.uiText = {}; // Clear existing
 
     try {
       const indexUrl = api.runtime.getURL("language/index.json");
@@ -129,7 +129,7 @@
         const languageRes = await fetch(languageUrl);
         const languageData = await languageRes.json();
 
-        window.BioConfig.uiText[languageData.id] = languageData;
+        window.iNatSCConfig.uiText[languageData.id] = languageData;
       }
     } catch (error) {
       console.error("[iNaturalist Sound Classifier] Failed to load language options:", error);
@@ -147,47 +147,47 @@
    */
   async function runAnalysis(modelConfig, languageConfig) {
     const obsId = getObservationId();
-    if (!obsId) return ui.log("<span class='bio-error'>ID Error</span>");
+    if (!obsId) return ui.log("<span class='insc-error'>ID Error</span>");
 
     ui.runBtn.disabled = true;
     ui.runBtn.innerText = languageConfig.tmpRunButton;
 
     try {
       // ui.log(`Target: Observation ${obsId}`);
-      const urls = await window.BioAudio.checkObservationSounds(obsId);
+      const urls = await window.iNatSCAudio.checkObservationSounds(obsId);
       // if (!urls.length) return ui.log(languageConfig.audioNotFound);
 
-      if (!engine) engine = new window.BioModelEngine(ui);
+      if (!engine) engine = new window.iNatSCModelEngine(ui);
       await engine.loadModel(modelConfig);
 
       let detections = [];
       let soundFileIndex = 1;
       for (const url of urls) {
-        ui.log(`<span class="bio-line-header">${languageConfig.analyzingSound} ${soundFileIndex}...</span>`);
-        const decoded = await window.BioAudio.decodeAudio(url);
-        const samples = await window.BioAudio.resample(decoded, modelConfig.sampleRate);
-        const chunks = window.BioAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.BioConfig.overlapPercentage);
+        ui.log(`<span class="insc-line-header">${languageConfig.analyzingSound} ${soundFileIndex}...</span>`);
+        const decoded = await window.iNatSCAudio.decodeAudio(url);
+        const samples = await window.iNatSCAudio.resample(decoded, modelConfig.sampleRate);
+        const chunks = window.iNatSCAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.iNatSCConfig.overlapPercentage);
 
-        ui.printTableHeader(window.BioConfig.timeCellWidth, window.BioConfig.speciesCellWidth, window.BioConfig.confidenceCellWidth, "bio-header");
+        ui.printTableHeader(window.iNatSCConfig.timeCellWidth, window.iNatSCConfig.speciesCellWidth, window.iNatSCConfig.confidenceCellWidth, "insc-header");
 
         for (let i = 0; i < chunks.length; i++) {
           await new Promise(r => setTimeout(r, 0));
           const res = await engine.predictChunk(chunks[i]);
-          const t1 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage))).toFixed(1);
-          const t2 = (i * (modelConfig.windowSize * (1 - window.BioConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
-          if (res.score > window.BioConfig.confidenceThreshold) {
+          const t1 = (i * (modelConfig.windowSize * (1 - window.iNatSCConfig.overlapPercentage))).toFixed(1);
+          const t2 = (i * (modelConfig.windowSize * (1 - window.iNatSCConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
+          if (res.score > window.iNatSCConfig.confidenceThreshold) {
             const speciesName = res.label.replace(/[\n\r]/g, "").trim();
             const timeRange = `${t1} - ${t2}s`;
 
             // Format cells with fixed widths
-            const col1 = ui.pad(timeRange, window.BioConfig.timeCellWidth);
-            const col2 = ui.pad(speciesName, window.BioConfig.speciesCellWidth);
-            const col3 = ui.pad(res.score.toFixed(2), window.BioConfig.confidenceCellWidth);
+            const col1 = ui.pad(timeRange, window.iNatSCConfig.timeCellWidth);
+            const col2 = ui.pad(speciesName, window.iNatSCConfig.speciesCellWidth);
+            const col3 = ui.pad(res.score.toFixed(2), window.iNatSCConfig.confidenceCellWidth);
             const slug = speciesName.replace(" ", "_");
             const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
 
             // Log the formatted row
-            ui.log(`${col1} | <a href="${taxaUrl}" target="_blank" class="bio-link-taxa-soft"><u><i>${col2}</i></u></a> | ${col3}`);
+            ui.log(`${col1} | <a href="${taxaUrl}" target="_blank" class="insc-link-taxa-soft"><u><i>${col2}</i></u></a> | ${col3}`);
 
             detections.push({ timeRange, speciesName, score: res.score });
           }
@@ -200,18 +200,18 @@
       window.lastAnalysisData = { detections, obsId, modelName: modelConfig.name };
 
       if (detections.length > 0) {
-        ui.log(`<span class="bio-line-header">${languageConfig.validatingDetection}...</span>`);
-        const coords = await window.BioGeo.getObservationCoords(obsId);
+        ui.log(`<span class="insc-line-header">${languageConfig.validatingDetection}...</span>`);
+        const coords = await window.iNatSCGeo.getObservationCoords(obsId);
         if (!coords) {
-          ui.log(`<span class='bio-error'>${languageConfig.coordNotFound}</span>`);
+          ui.log(`<span class='insc-error'>${languageConfig.coordNotFound}</span>`);
         } else {
           // Get unique species
           const uniqueSpecies = [...new Set(detections.map(d => d.speciesName))];
           ui.log(`${languageConfig.checkingGBIF} ${uniqueSpecies.length} species...`);
           const bboxes = {};
           // Fetch bboxes from both GBIF and iNaturalist in parallel
-          const gbifPromises = uniqueSpecies.map(species => window.BioGeo.getSpeciesBBox(species));
-          const inatPromises = uniqueSpecies.map(species => window.BioGeo.getiNaturalistSpeciesBBox(species));
+          const gbifPromises = uniqueSpecies.map(species => window.iNatSCGeo.getSpeciesBBox(species));
+          const inatPromises = uniqueSpecies.map(species => window.iNatSCGeo.getiNaturalistSpeciesBBox(species));
           const [gbifArray, inatArray] = await Promise.all([Promise.all(gbifPromises), Promise.all(inatPromises)]);
           uniqueSpecies.forEach((species, i) => {
             bboxes[species] = { gbif: gbifArray[i], inat: inatArray[i] };
@@ -219,8 +219,8 @@
 
           const validDetections = detections.filter(d => {
             const bbox = bboxes[d.speciesName];
-            const gbifValid = bbox.gbif && window.BioGeo.isWithinBBox(coords, bbox.gbif);
-            const inatValid = bbox.inat && window.BioGeo.isWithinBBox(coords, bbox.inat);
+            const gbifValid = bbox.gbif && window.iNatSCGeo.isWithinBBox(coords, bbox.gbif);
+            const inatValid = bbox.inat && window.iNatSCGeo.isWithinBBox(coords, bbox.inat);
             return gbifValid || inatValid;
           });
 
@@ -229,27 +229,27 @@
             const slug = top.speciesName.replace(" ", "_");
             const taxaUrl = `https://www.inaturalist.org/taxa/${slug}`;
             ui.log(`<b>${languageConfig.topDetection}:</b>`);
-            ui.log(`<b>${ui.pad(top.timeRange, window.BioConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='bio-link-taxa'><u><i>${ui.pad(top.speciesName, window.BioConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(top.score.toFixed(2), window.BioConfig.confidenceCellWidth)}</b>`);
+            ui.log(`<b>${ui.pad(top.timeRange, window.iNatSCConfig.timeCellWidth)}</b> | <a href="${taxaUrl}" target="_blank" class='insc-link-taxa'><u><i>${ui.pad(top.speciesName, window.iNatSCConfig.speciesCellWidth)}</i></u></a>  | <b>${ui.pad(top.score.toFixed(2), window.iNatSCConfig.confidenceCellWidth)}</b>`);
             
             // Determine validation status for the top species
             const bbox = bboxes[top.speciesName];
-            const gbifValid = bbox.gbif && window.BioGeo.isWithinBBox(coords, bbox.gbif);
-            const inatValid = bbox.inat && window.BioGeo.isWithinBBox(coords, bbox.inat);
+            const gbifValid = bbox.gbif && window.iNatSCGeo.isWithinBBox(coords, bbox.gbif);
+            const inatValid = bbox.inat && window.iNatSCGeo.isWithinBBox(coords, bbox.inat);
             
             let validationMessage;
             let messageClass;
             if (gbifValid && inatValid) {
               validationMessage = languageConfig.withinBoth;
-              messageClass = "bio-geo-match";
+              messageClass = "insc-geo-match";
             } else if (gbifValid) {
               validationMessage = languageConfig.withinGBIFOnly;
-              messageClass = "bio-geo-match";
+              messageClass = "insc-geo-match";
             } else if (inatValid) {
               validationMessage = languageConfig.withinINatOnly;
-              messageClass = "bio-geo-match";
+              messageClass = "insc-geo-match";
             } else {
               validationMessage = languageConfig.outsideBoth;
-              messageClass = "bio-geo-mismatch";
+              messageClass = "insc-geo-mismatch";
             }
             
             ui.log(`<span class="${messageClass}">${validationMessage}</span>`);
@@ -261,9 +261,9 @@
         ui.log(`${languageConfig.noDetection}`);
       }
       ui.log(`<b>${languageConfig.endOfAnalysis}</b>`);
-      // ui.log(`<span class="bio-error">Fail: ${e.message}</span>`);
+      // ui.log(`<span class="insc-error">Fail: ${e.message}</span>`);
     } catch (e) {
-      ui.log(`<span class="bio-error">${languageConfig.failedAnalysis}: ${e.message}</span>`);
+      ui.log(`<span class="insc-error">${languageConfig.failedAnalysis}: ${e.message}</span>`);
     } finally {
       // Terminate the worker to reclaim WASM memory.
       // WebAssembly.Memory can grow but never shrink; the only way
@@ -304,7 +304,7 @@
 
     try {
       // Check if this observation actually has audio files
-      const audioUrls = await window.BioAudio.checkObservationSounds(obsId);
+      const audioUrls = await window.iNatSCAudio.checkObservationSounds(obsId);
       
       // Handle the "No Audio" scenario
       if (!audioUrls || audioUrls.length === 0) {
@@ -319,7 +319,7 @@
       await loadGeographicModelRegistry();
       
       // IF the registry is empty (no models cover this area)
-      if (Object.keys(window.BioConfig.modelRegistry).length === 0) {
+      if (Object.keys(window.iNatSCConfig.modelRegistry).length === 0) {
         console.log("[iNaturalist Sound Classifier] No models available for this geographic region.");
         return; 
       }
@@ -328,11 +328,11 @@
       await loadLanguageOptions();
 
       // Get the list of IDs we actually have files for (e.g., ['en', 'pt_BR'])
-      const availableLangs = Object.keys(window.BioConfig.uiText);
+      const availableLangs = Object.keys(window.iNatSCConfig.uiText);
 
       // Determine the target language key
       // Priority: 1. Manual Save | 2. Browser Language | 3. English
-      let targetLang = localStorage.getItem('bio-language');
+      let targetLang = localStorage.getItem('insc-language');
 
       if (!targetLang) {
         const browserLang = navigator.language; //.replace('-', '_');
@@ -348,7 +348,7 @@
       }
 
       // Fetch language dictionary
-      const uiInputText = window.BioConfig.uiText[targetLang] || window.BioConfig.uiText['en'];
+      const uiInputText = window.iNatSCConfig.uiText[targetLang] || window.iNatSCConfig.uiText['en'];
 
       if (!uiInputText) {
         console.error("[iNaturalist Sound Classifier] Language initialization failed. Fallback to English.");
@@ -358,7 +358,7 @@
       // Handle the "Audio Found" scenario
       if (!ui) {
         // First time seeing audio on this session, build the UI
-        ui = new window.BioUI(runAnalysis, uiInputText, triggerRebuild);
+        ui = new window.iNatSCUI(runAnalysis, uiInputText, triggerRebuild);
       } else {
         // UI already exists, just reveal it and clear old logs
         ui.panel.style.setProperty('display', 'flex', 'important'); 
@@ -375,6 +375,6 @@
   }
 
   // Handle iNaturalist's dynamic page transitions
-  setInterval(init, window.BioConfig.dynamicPageInterval);
+  setInterval(init, window.iNatSCConfig.dynamicPageInterval);
   init();
 })();

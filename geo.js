@@ -5,7 +5,7 @@
  * builds species bounding boxes from GBIF and iNaturalist occurrence data,
  * and checks whether a point falls within a bounding box.
  */
-window.BioGeo = {
+window.iNatSCGeo = {
   /** @type {Object<string, {minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} GBIF bbox cache keyed by species name. */
   cache: {},
   /** @type {Object<string, {minLat:number,maxLat:number,minLon:number,maxLon:number}|null>} iNaturalist bbox cache keyed by species name. */

@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-describe('BioUI', () => {
+describe('iNatSCUI', () => {
   let ui;
 
   beforeAll(() => {
@@ -25,8 +25,8 @@ describe('BioUI', () => {
       writable: true
     });
 
-    // Set up BioConfig
-    window.BioConfig = {
+    // Set up iNatSCConfig
+    window.iNatSCConfig = {
       modelRegistry: {
         birdnet: { name: "BirdNET", version: "2.4", id: "birdnet" }
       },
@@ -69,7 +69,7 @@ describe('BioUI', () => {
       noDetectionsToExport: "No detections"
     };
 
-    ui = new window.BioUI(jest.fn(), uiInputText, jest.fn());
+    ui = new window.iNatSCUI(jest.fn(), uiInputText, jest.fn());
   });
 
   describe('pad', () => {
@@ -106,7 +106,7 @@ describe('BioUI', () => {
       ui.log("Test message");
       expect(ui.logArea.children.length).toBe(1);
       expect(ui.logArea.children[0].innerHTML).toBe("Test message");
-      expect(ui.logArea.children[0].className).toBe("bio-log-entry");
+      expect(ui.logArea.children[0].className).toBe("insc-log-entry");
     });
 
     test('should update existing entry when updateId matches', () => {
@@ -141,9 +141,9 @@ describe('BioUI', () => {
   describe('injectPanel', () => {
     test('should not create duplicate panels', () => {
       // Panel already exists from constructor
-      const before = document.querySelectorAll("#bio-model-panel").length;
+      const before = document.querySelectorAll("#insc-model-panel").length;
       ui.injectPanel(ui.uiInputText);
-      const after = document.querySelectorAll("#bio-model-panel").length;
+      const after = document.querySelectorAll("#insc-model-panel").length;
       expect(after).toBe(before);
     });
   });

@@ -3,7 +3,7 @@
 // Defined once here (loaded first) and shared across all content scripts.
 const api = typeof browser !== "undefined" ? browser : chrome;
 
-window.BioConfig = {
+window.iNatSCConfig = {
   modelRegistry: {},
   uiText: {},
   overlapPercentage: 0,

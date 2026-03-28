@@ -21,11 +21,10 @@
     {
       "matches": ["https://www.inaturalist.org/observations/*"],
       "js": [
-        "onnx/ort.min.js", 
-        "config.js", 
-        "ui.js", 
-        "audio.js", 
-        "model.js", 
+        "config.js",
+        "ui.js",
+        "audio.js",
+        "model.js",
         "content.js",
         "geo.js"
       ],
@@ -37,6 +36,7 @@
     {
       "resources": [
         "onnx/*",
+        "inference-worker.js",
         "model_zoo/*.json",
         "language/*.json",
         "styles/*.css"

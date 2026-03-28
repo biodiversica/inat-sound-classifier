@@ -231,6 +231,10 @@
     } catch (e) {
       ui.log(`<span class="bio-error">${languageConfig.failedAnalysis}: ${e.message}</span>`);
     } finally {
+      // Terminate the worker to reclaim WASM memory.
+      // WebAssembly.Memory can grow but never shrink; the only way
+      // to free it is to terminate the worker holding the WASM instance.
+      if (engine) engine.terminateWorker();
       ui.runBtn.disabled = false;
       ui.runBtn.innerText = languageConfig.analysisButton;
     }

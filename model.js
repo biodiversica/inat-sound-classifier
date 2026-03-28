@@ -2,16 +2,20 @@
 window.BioModelEngine = class BioModelEngine {
   constructor(ui) {
     this.ui = ui;
-    this.session = null;
+    this.worker = null;
     this.labels = [];
     this.currentModelConfig = null;
     this.currentLanguageConfig = null;
+    this.inputNames = null;
+    this.outputNames = null;
+    this._pendingResolve = null;
+    this._pendingReject = null;
   }
 
   // Validate if buffer looks like a valid ONNX model
   isValidONNXBuffer(buffer) {
     if (!buffer || buffer.byteLength < 100) return false; // Too small for a valid model
-    
+
     const view = new Uint8Array(buffer);
     // ONNX models are protobuf files. Check for common protobuf field starts
     // First field is usually ir_version (field 1) or producer_name (field 2)
@@ -26,13 +30,13 @@ window.BioModelEngine = class BioModelEngine {
       this.ui.log(`${this.ui.uiInputText.downloadingModel}... 0%`, "download-progress");
       response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
+
       const contentLength = response.headers.get('content-length');
       const total = contentLength ? parseInt(contentLength, 10) : null;
       const reader = response.body.getReader();
       const chunks = [];
       let loaded = 0;
-      
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -43,7 +47,7 @@ window.BioModelEngine = class BioModelEngine {
           this.ui.log(`${this.ui.uiInputText.downloadingModel}... ${percent}%`, "download-progress");
         }
       }
-      
+
       // Combine chunks
       const uint8Array = new Uint8Array(loaded);
       let offset = 0;
@@ -51,13 +55,13 @@ window.BioModelEngine = class BioModelEngine {
         uint8Array.set(chunk, offset);
         offset += chunk.length;
       }
-      
+
       // Create response for caching
       const cachedResponse = new Response(uint8Array);
       await cache.put(url, cachedResponse);
-      
+
       this.ui.log(`${this.ui.uiInputText.savedModel}: ${url.split('/').pop()}`);
-      
+
       // Return the data
       if (type === "arrayBuffer") {
         return uint8Array.buffer;
@@ -70,6 +74,73 @@ window.BioModelEngine = class BioModelEngine {
     }
   }
 
+  // Create a Web Worker using a blob URL for CSP compatibility
+  _createWorker() {
+    return new Promise((resolve, reject) => {
+      const workerScriptUrl = chrome.runtime.getURL("inference-worker.js");
+      // Fetch the worker script and create a blob URL so it runs
+      // under the page's origin, avoiding content script CSP issues
+      fetch(workerScriptUrl)
+        .then((r) => r.text())
+        .then((code) => {
+          const blob = new Blob([code], { type: "text/javascript" });
+          const blobUrl = URL.createObjectURL(blob);
+          this.worker = new Worker(blobUrl);
+          URL.revokeObjectURL(blobUrl);
+
+          this.worker.onmessage = (e) => this._handleMessage(e);
+          this.worker.onerror = (e) => {
+            if (this._pendingReject) {
+              this._pendingReject(new Error(e.message));
+              this._pendingResolve = null;
+              this._pendingReject = null;
+            }
+          };
+
+          // Initialize ORT inside the worker
+          const ortUrl = chrome.runtime.getURL("onnx/ort.min.js");
+          const wasmPaths = chrome.runtime.getURL("onnx/");
+          this._sendMessage({ type: "init", ortUrl, wasmPaths })
+            .then(() => resolve())
+            .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
+  _handleMessage(e) {
+    const { type } = e.data;
+    if (type === "error") {
+      if (this._pendingReject) {
+        this._pendingReject(new Error(e.data.message));
+      }
+    } else if (this._pendingResolve) {
+      this._pendingResolve(e.data);
+    }
+    this._pendingResolve = null;
+    this._pendingReject = null;
+  }
+
+  _sendMessage(msg, transfer) {
+    return new Promise((resolve, reject) => {
+      this._pendingResolve = resolve;
+      this._pendingReject = reject;
+      this.worker.postMessage(msg, transfer || []);
+    });
+  }
+
+  // Terminate the worker to fully reclaim WASM memory.
+  // WebAssembly.Memory can grow but never shrink; terminating the
+  // worker is the only way to release that memory back to the OS.
+  terminateWorker() {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this.inputNames = null;
+    this.outputNames = null;
+  }
+
   async loadModel(modelConfig) {
     // Check model format
     if (modelConfig.format !== 'onnx') {
@@ -77,11 +148,8 @@ window.BioModelEngine = class BioModelEngine {
       throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}. Only ONNX models are supported.`);
     }
 
-    // Release old session from memory if we are switching models
-    if (this.session) {
-      try { await this.session.release(); } catch (e) {}
-      this.session = null;
-    }
+    // Terminate old worker to free WASM memory before starting fresh
+    this.terminateWorker();
 
     this.currentModelConfig = modelConfig;
     this.ui.log(`<span class="bio-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
@@ -98,16 +166,25 @@ window.BioModelEngine = class BioModelEngine {
 
     // Fetch model buffer and labels using Cache
     const modelBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
-    
+
     // Validate the model buffer
     if (!this.isValidONNXBuffer(modelBuffer)) {
       throw new Error("Downloaded model does not appear to be a valid ONNX file.");
     }
-    
+
     const labelsText = await this.fetchWithCache(modelConfig.labelsUrl, "text");
-    
+
     this.labels = labelsText.trim().split("\n");
-    this.session = await ort.InferenceSession.create(modelBuffer, { executionProviders: ["wasm"] });
+
+    // Create a fresh worker and load the model inside it
+    await this._createWorker();
+    const result = await this._sendMessage(
+      { type: "loadModel", modelBuffer },
+      [modelBuffer]
+    );
+    this.inputNames = result.inputNames;
+    this.outputNames = result.outputNames;
+
     this.ui.log(`<b>${this.ui.uiInputText.loadingSuccess}</b>`);
   }
 
@@ -121,17 +198,21 @@ window.BioModelEngine = class BioModelEngine {
 
   async predictChunk(chunk) {
     const config = this.currentModelConfig;
-    const inputName = this.session.inputNames[config.inputIndex];
-    const outputName = this.session.outputNames[config.outputIndex];
-    const tensor = new ort.Tensor("float32", chunk, [1, chunk.length]);
-    
-    const results = await this.session.run({ [inputName]: tensor });
-    const logits = results[outputName].data;
-    
+    const inputName = this.inputNames[config.inputIndex];
+    const outputName = this.outputNames[config.outputIndex];
+
+    const result = await this._sendMessage({
+      type: "predict",
+      chunk,
+      inputName,
+      outputName,
+    });
+    const logits = result.logits;
+
     let bestIdx = 0, bestScore = 0;
 
     if (config.softmax) {
-      const probs = this.softmax(logits);
+      const probs = this.softmax(Array.from(logits));
       for (let i = 0; i < probs.length; i++) {
         if (probs[i] > bestScore) { bestScore = probs[i]; bestIdx = i; }
       }
@@ -142,9 +223,9 @@ window.BioModelEngine = class BioModelEngine {
       }
     }
 
-    return { 
-      label: this.labels[bestIdx + config.skipLabelsHeader], 
-      score: bestScore 
+    return {
+      label: this.labels[bestIdx + config.skipLabelsHeader],
+      score: bestScore
     };
   }
 };

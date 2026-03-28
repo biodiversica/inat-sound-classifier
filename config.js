@@ -10,6 +10,3 @@ window.BioConfig = {
   dynamicPageInterval: 2000,
   modelCacheLabel: "bioacoustic-models-v1"
 };
-
-// Point ORT to WASM folder
-ort.env.wasm.wasmPaths = chrome.runtime.getURL("onnx/");

@@ -25,7 +25,7 @@ if (typeof window.atob === 'undefined') {
 }
 
 // Import source code so it attaches to the window object
-require('../audio.js');
+require('../src/audio.js');
 
 describe('iNatSCAudio Module', () => {
   beforeEach(() => {

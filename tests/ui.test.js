@@ -39,7 +39,7 @@ describe('iNatSCUI', () => {
     };
 
     // Load UI source
-    require('../ui.js');
+    require('../src/ui.js');
 
     const uiInputText = {
       extensionName: "Test Extension",

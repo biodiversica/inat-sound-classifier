@@ -14,7 +14,7 @@ global.caches = {
 };
 
 // Load source
-require('../model.js');
+require('../src/model.js');
 
 describe('iNatSCModelEngine', () => {
   let engine;

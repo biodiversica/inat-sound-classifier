@@ -13,7 +13,7 @@ global.api = global.chrome;
 global.window = {};
 
 // 2. Load your actual extension file into the test environment
-require('../geo.js');
+require('../src/geo.js');
 
 describe('iNatSCGeo Geographic Validation', () => {
   const bbox = { minLat: 10, maxLat: 50, minLon: -100, maxLon: -50 };

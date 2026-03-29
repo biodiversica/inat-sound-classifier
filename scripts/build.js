@@ -18,11 +18,12 @@ const { execSync } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
+const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "manifest.json"), "utf-8")).version;
 
 const isDev = process.argv.includes("--dev");
 
-// Files and directories to include in the extension package
-const SOURCES = [
+// JS source files (in src/) to copy flat into the extension package
+const JS_SOURCES = [
   "background.js",
   "config.js",
   "content.js",
@@ -31,11 +32,15 @@ const SOURCES = [
   "ui.js",
   "geo.js",
   "inference-worker.js",
+];
+
+// Asset directories to copy as-is into the extension package
+const ASSET_SOURCES = [
   "onnx",
   "model_zoo",
   "language",
   "styles",
-  "icons"
+  "icons",
 ];
 
 function clean(dir) {
@@ -58,7 +63,16 @@ function copyRecursive(src, dest) {
 }
 
 function linkOrCopy(destDir) {
-  for (const item of SOURCES) {
+  for (const item of JS_SOURCES) {
+    const src = path.join(ROOT, "src", item);
+    const dest = path.join(destDir, item);
+    if (!fs.existsSync(src)) {
+      console.warn(`  warning: src/${item} not found, skipping`);
+      continue;
+    }
+    copyRecursive(src, dest);
+  }
+  for (const item of ASSET_SOURCES) {
     const src = path.join(ROOT, item);
     const dest = path.join(destDir, item);
     if (!fs.existsSync(src)) {
@@ -89,7 +103,7 @@ function buildChrome() {
   writeManifest(dir, manifest);
 
   if (!isDev) {
-    const zipPath = path.join(DIST, "inat-sound-classifier-chrome.zip");
+    const zipPath = path.join(DIST, `inat-sound-classifier-chrome-${VERSION}.zip`);
     execSync(`cd "${dir}" && zip -r "${zipPath}" .`, { stdio: "pipe" });
     console.log(`  -> ${path.relative(ROOT, zipPath)}`);
   } else {
@@ -122,7 +136,7 @@ function buildFirefox() {
   writeManifest(dir, manifest);
 
   if (!isDev) {
-    const zipPath = path.join(DIST, "inat-sound-classifier-firefox.zip");
+    const zipPath = path.join(DIST, `inat-sound-classifier-firefox-${VERSION}.zip`);
     execSync(`cd "${dir}" && zip -r "${zipPath}" .`, { stdio: "pipe" });
     console.log(`  -> ${path.relative(ROOT, zipPath)}`);
   } else {

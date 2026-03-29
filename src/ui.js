@@ -141,6 +141,7 @@ window.iNatSCUI = class iNatSCUI {
         
         <div id="insc-log-area"></div>
         <div class="insc-bottom-controls"> 
+          <a href="https://biodiversica.xyz" target="_blank" id="insc-biodiversica-link">~/biodiversica</a>
           <button id="insc-export-btn">${inputText.exportButton}</button>
           <button id="insc-clear-btn">${inputText.clearLogsButton}</button>
         </div>

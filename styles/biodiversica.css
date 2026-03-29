@@ -283,8 +283,20 @@
 }
 
 .insc-bottom-controls {
-  text-align: right !important;
+  display: flex;
+  align-items: center;
   padding: 5px;
+}
+
+#insc-biodiversica-link {
+  margin-right: auto;
+  color: #118b50;
+}
+
+#insc-biodiversica-link:hover {
+  text-decoration: underline;
+  background-color: #333333;
+  color:#cccccc;
 }
 
 /* Container for the tooltip */

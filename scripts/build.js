@@ -35,6 +35,7 @@ const SOURCES = [
   "model_zoo",
   "language",
   "styles",
+  "icons"
 ];
 
 function clean(dir) {

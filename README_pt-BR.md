@@ -30,6 +30,7 @@ Compatível com **navegadores Chromium** (Chrome, Brave, Edge) e **Firefox**.
    git clone https://github.com/biodiversica/inat-sound-classifier.git
    cd inat-sound-classifier
    npm install
+   npm run sync-onnx
    ```
 
 2. **Compile para o seu navegador:**
@@ -69,14 +70,14 @@ Compatível com **navegadores Chromium** (Chrome, Brave, Edge) e **Firefox**.
 ```
 inat-sound-classifier/
 +-- manifest.json           # Manifesto da extensão (Chrome MV3 como referência)
-+-- config.js               # Configuração global e shim de API (chrome/browser)
-+-- content.js              # Ponto de entrada: detecção de página, orquestração da análise
-+-- model.js                # iNatSCModelEngine: carregamento de modelo, cache, inferência
-+-- ui.js                   # iNatSCUI: injeção no DOM, controles, logging
-+-- audio.js                # iNatSCAudio: download, decodificação, resampling, chunking
-+-- geo.js                  # iNatSCGeo: validação geográfica GBIF/iNaturalist
-+-- background.js           # Service worker / event page: proxy CORS, downloads streaming
-+-- inference-worker.js     # Web Worker: inferência ONNX Runtime WASM
++-- src/config.js           # Configuração global e shim de API (chrome/browser)
++-- src/content.js          # Ponto de entrada: detecção de página, orquestração da análise
++-- src/model.js            # iNatSCModelEngine: carregamento de modelo, cache, inferência
++-- src/ui.js               # iNatSCUI: injeção no DOM, controles, logging
++-- src/audio.js            # iNatSCAudio: download, decodificação, resampling, chunking
++-- src/geo.js              # iNatSCGeo: validação geográfica GBIF/iNaturalist
++-- src/background.js       # Service worker / event page: proxy CORS, downloads streaming
++-- src/inference-worker.js # Web Worker: inferência ONNX Runtime WASM
 +-- onnx/                   # Binários WASM do ONNX Runtime (sincronizados do node_modules)
 +-- model_zoo/              # Arquivos JSON de configuração de modelos + index.json
 +-- language/               # Arquivos JSON de tradução da interface + index.json
@@ -179,7 +180,7 @@ Você pode limpar usando o botão **Limpar Cache** nas Configurações Avançada
 
 ### Firefox: download do modelo trava
 
-Verifique se a extensão tem permissões para o domínio de hospedagem do modelo. O manifesto inclui wildcards para HuggingFace (`*.huggingface.co`, `*.hf.co`) e Zenodo (`zenodo.org`). URLs de modelos personalizados de outros domínios podem exigir a adição de `host_permissions` no manifesto.
+Verifique se a extensão tem permissões para o domínio de hospedagem do modelo. O 'manifest.json' inclui wildcards para HuggingFace (`*.huggingface.co`, `*.hf.co`) e Zenodo (`zenodo.org`). URLs de modelos personalizados de outros domínios podem exigir a adição de `host_permissions` no 'manifesto.json'.
 
 ---
 
@@ -196,4 +197,7 @@ Verifique se a extensão tem permissões para o domínio de hospedagem do modelo
 
 ## Licença
 
-Distribuído sob a licença GPLv3. Veja o arquivo `LICENSE` para mais informações.
+O código fonte é distribuído sob a licença [GPL-3.0](LICENSE). Os modelos disponíveis possuem licenças específicas:
+
+* BirdNET v2.4: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+* Perch v2.0: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)

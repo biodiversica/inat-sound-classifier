@@ -31,6 +31,7 @@ Supports **Chromium-based browsers** (Chrome, Brave, Edge) and **Firefox**.
    git clone https://github.com/biodiversica/inat-sound-classifier.git
    cd inat-sound-classifier
    npm install
+   npm run sync-onnx
    ```
 
 2. **Build for your browser:**
@@ -67,14 +68,14 @@ Supports **Chromium-based browsers** (Chrome, Brave, Edge) and **Firefox**.
 ```
 inat-sound-classifier/
 +-- manifest.json           # Extension manifest (Chrome MV3 source of truth)
-+-- config.js               # Global config and browser API shim (chrome/browser)
-+-- content.js              # Main entry point: page detection, analysis orchestration
-+-- model.js                # iNatSCModelEngine: model loading, caching, inference
-+-- ui.js                   # iNatSCUI: DOM injection, controls, logging
-+-- audio.js                # iNatSCAudio: fetching, decoding, resampling, chunking
-+-- geo.js                  # iNatSCGeo: GBIF/iNaturalist geographic validation
-+-- background.js           # Service worker / event page: CORS proxy, streaming downloads
-+-- inference-worker.js     # Web Worker: ONNX Runtime WASM inference
++-- src/config.js           # Global config and browser API shim (chrome/browser)
++-- src/content.js          # Main entry point: page detection, analysis orchestration
++-- src/model.js            # iNatSCModelEngine: model loading, caching, inference
++-- src/ui.js               # iNatSCUI: DOM injection, controls, logging
++-- src/audio.js            # iNatSCAudio: fetching, decoding, resampling, chunking
++-- src/geo.js              # iNatSCGeo: GBIF/iNaturalist geographic validation
++-- src/background.js       # Service worker / event page: CORS proxy, streaming downloads
++-- src/inference-worker.js # Web Worker: ONNX Runtime WASM inference
 +-- onnx/                   # ONNX Runtime WASM binaries (synced from node_modules)
 +-- model_zoo/              # Model configuration JSON files + index.json
 +-- language/               # UI translation JSON files + index.json
@@ -189,4 +190,7 @@ Ensure the extension has permissions for the model hosting domain. The manifest 
 
 ## License
 
-Distributed under the GPLv3 License. See `LICENSE` for more information.
+Source code is distributed under the [GPL-3.0](LICENSE). The current available models have specific licenses:
+
+* BirdNET v2.4: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+* Perch v2.0: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)

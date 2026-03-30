@@ -12,7 +12,7 @@ Supports **Chromium-based browsers** (Chrome, Brave, Edge) and **Firefox**.
 * **Cross-Browser Support:** Works as a Chrome/Chromium extension (Manifest V3 service worker) and as a Firefox add-on (Manifest V3 event page).
 * **Geographic Filtering:** Automatically filters the model registry based on the observation's coordinates so you only see relevant models.
 * **Geographic Validation:** Top detections are checked against GBIF and iNaturalist occurrence bounding boxes to flag species outside their known range.
-* **Multi-Model Support:** Ships with **BirdNET v2.4** and **Google Perch v2.0**. Custom models can be added via JSON configuration or through the UI.
+* **Multi-Model Support:** Currently available models are **[BirdNET v2.4](https://huggingface.co/justinchuby/BirdNET-onnx)** and **[Google Perch v2.0](https://huggingface.co/justinchuby/Perch-onnx)**. Custom models can be added via JSON configuration or through the UI.
 * **Flexible Label Parsing:** Model label files can use any delimiter (comma, tab, semicolon, underscore, etc.), with configurable header skipping and column selection.
 * **Configurable Activation:** Each model specifies its activation function (`softmax`, `sigmoid`, or `none`) in its JSON config.
 * **Local Caching:** Downloaded models are stored in the browser's `CacheStorage` for instant loading on future sessions.

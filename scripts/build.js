@@ -125,11 +125,15 @@ function buildFirefox() {
   // Replace service_worker with scripts for Firefox background page
   manifest.background = { scripts: ["background.js"] };
 
-  // Add Firefox-required gecko ID
+  // Add Firefox-required gecko ID and data collection declaration
   manifest.browser_specific_settings = {
     gecko: {
       id: "inat-sound-classifier@biodiversica",
       strict_min_version: "128.0",
+      data_collection_permissions: {
+        required: ["none"],
+        optional: [],
+      },
     },
   };
 

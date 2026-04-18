@@ -292,14 +292,15 @@ window.iNatSCUI = class iNatSCUI {
       const val = parseFloat(e.target.value);
       confVal.innerText = val.toFixed(2);
       window.iNatSCConfig.confidenceThreshold = val;
+      localStorage.setItem('insc-confidence', val);
     });
 
     // --- Overlap Slider Logic ---
     const overlapSlider = document.getElementById("insc-overlap-slider");
     const overlapVal = document.getElementById("insc-overlap-val");
 
-    // Set initial slider position
-    overlapSlider.value = window.iNatSCConfig.overlapPercentage;
+    // Set initial slider position (config stores fraction 0–0.9; slider expects 0–90)
+    overlapSlider.value = window.iNatSCConfig.overlapPercentage * 100;
     overlapVal.innerText = overlapSlider.value + "%";
 
     // Listen for drags
@@ -307,6 +308,7 @@ window.iNatSCUI = class iNatSCUI {
       const val = parseInt(e.target.value, 10);
       overlapVal.innerText = val + "%";
       window.iNatSCConfig.overlapPercentage = val / 100;
+      localStorage.setItem('insc-overlap', val / 100);
     });
   }
 

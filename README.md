@@ -93,7 +93,7 @@ inat-sound-classifier/
 ### Via the UI
 
 1. Open the **Advanced Settings** panel on any observation page.
-2. Paste a model JSON configuration into the **Custom Model** text area, using the following format:
+2. Paste a model JSON configuration into the **Custom Model** text area, using the following format (currently accepting urls from huggingface.co and zenodo.org):
 ```json
    {
      "id": "my_model_v1",

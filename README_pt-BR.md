@@ -95,12 +95,7 @@ inat-sound-classifier/
 ### Pela Interface
 
 1. Abra o painel de **Configurações Avançadas** em qualquer página de observação.
-2. Cole a configuração JSON do modelo na área de texto **Modelo Personalizado**.
-3. Clique em **Adicionar**. O modelo é salvo no `localStorage` e persiste entre sessões.
-
-### Pelo Model Zoo
-
-1. Crie um arquivo JSON em `model_zoo/` seguindo este formato:
+2. Cole a configuração JSON do modelo na área de texto **Modelo Personalizado**, seguindo este formato (urls acessíveis para download de modelos são huggingface.co e zenodo.org):
 
    ```json
    {
@@ -126,6 +121,11 @@ inat-sound-classifier/
    }
    ```
 
+3. Clique em **Adicionar**. O modelo é salvo no `localStorage` e persiste entre sessões.
+
+### Pelo Model Zoo
+
+1. Crie um arquivo JSON em `model_zoo/`.
 2. Adicione o nome do arquivo em `model_zoo/index.json`.
 
 ### Configuração do Arquivo de Labels

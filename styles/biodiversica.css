@@ -6,7 +6,7 @@
   width: 520px;
   background: #fcfee5ff;
   color: #118b50;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
   padding: 10px;
   z-index: 999999;
@@ -57,7 +57,7 @@
   border: 1px solid #111;
   padding: 2px;
   outline: none;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
 }
 
@@ -71,7 +71,7 @@
   border: 1px solid #111;
   padding: 2px;
   outline: none;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
 }
 
@@ -86,7 +86,7 @@
   padding: 3px 8px;
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
 }
 
@@ -101,7 +101,7 @@
   border: 1px solid #444; /* Dimmer border */
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
   padding: 3px 8px;
 }
@@ -117,7 +117,7 @@
   border: 1px solid #444; /* Dimmer border */
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
   padding: 3px 8px;
   margin-right: 5px;
@@ -134,7 +134,7 @@
   border: 1px solid #444;
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
   padding: 3px 8px;
 }
@@ -178,7 +178,7 @@
   cursor: pointer;
   color: #118b50;
   margin-bottom: 5px;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
 }
 
 #insc-custom-model {
@@ -211,7 +211,7 @@
   padding: 2px 5px;
   margin-top: 2px;
   cursor: pointer;
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 12px;
 }
 
@@ -325,7 +325,7 @@
   line-height: 1.4;         /* Makes multi-line text easier to read */
   text-align: center;       /* Centers the text inside the box */
   /* ---------------------- */
-  font-family: 'Courier New', monospace !important;
+  font-family: 'Consolas', 'Menlo', monospace !important;
   font-size: 10px;
   z-index: 1000;
   visibility: hidden;

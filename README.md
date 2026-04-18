@@ -93,13 +93,8 @@ inat-sound-classifier/
 ### Via the UI
 
 1. Open the **Advanced Settings** panel on any observation page.
-2. Paste a model JSON configuration into the **Custom Model** text area.
-3. Click **Add**. The model is saved to `localStorage` and persists across sessions.
-
-### Via the Model Zoo
-
-1. Create a JSON file in `model_zoo/` following this format:
-   ```json
+2. Paste a model JSON configuration into the **Custom Model** text area, using the following format:
+```json
    {
      "id": "my_model_v1",
      "name": "My Model",
@@ -121,8 +116,12 @@ inat-sound-classifier/
      "format": "onnx",
      "taxa": ["aves"]
    }
-   ```
+```
+3. Click **Add**. The model is saved to `localStorage` and persists across sessions.
 
+### Via the Model Zoo
+
+1. Create a JSON file in `model_zoo/`.
 2. Add the filename to `model_zoo/index.json`.
 
 ### Label File Configuration

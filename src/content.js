@@ -367,12 +367,44 @@
 
       ui.log(`${uiInputText.initLog} <b>'${uiInputText.analysisButton}'</b>`);
 
-      if (navigator.userAgentData) {
-        const { bitness } = await navigator.userAgentData.getHighEntropyValues(['bitness']);
-        if (bitness === '32') {
-          ui.log(`<span class="insc-error">⚠ ${uiInputText.browser32bitWarning}</span>`);
+      let is32bit = false;
+      console.log('[iNaturalist Sound Classifier] Checking browser bitness...');
+      console.log('[iNaturalist Sound Classifier] userAgent:', navigator.userAgent);
+      
+      // Method 1: Try userAgentData first
+      try {
+        if (navigator.userAgentData) {
+          console.log('[iNaturalist Sound Classifier] userAgentData available');
+          const result = await navigator.userAgentData.getHighEntropyValues(['bitness']);
+          console.log('[iNaturalist Sound Classifier] bitness from userAgentData:', result.bitness);
+          is32bit = result.bitness === '32';
+        } else {
+          console.log('[iNaturalist Sound Classifier] userAgentData not available');
         }
-      } else if (navigator.userAgent.includes('WOW64')) {
+      } catch (e) {
+        console.log('[iNaturalist Sound Classifier] getHighEntropyValues error:', e.message);
+      }
+      
+      // Method 2: Check user agent strings
+      if (!is32bit) {
+        const ua = navigator.userAgent;
+        is32bit = ua.includes('WOW64') || (ua.includes('Windows') && ua.includes('Win32') && !ua.includes('Win64'));
+        console.log('[iNaturalist Sound Classifier] is32bit from userAgent:', is32bit);
+      }
+      
+      // Method 3: Check memory limits (32-bit browsers typically have ~2GB limit)
+      if (!is32bit && performance && performance.memory) {
+        const heapLimit = performance.memory.jsHeapSizeLimit;
+        console.log('[iNaturalist Sound Classifier] jsHeapSizeLimit:', heapLimit, 'bytes');
+        // 32-bit browsers typically max out around 2GB (2147483648 bytes)
+        // 64-bit browsers usually have 4GB+ limits
+        is32bit = heapLimit < 3000000000; // Less than ~3GB suggests 32-bit
+        console.log('[iNaturalist Sound Classifier] is32bit from memory limit:', is32bit);
+      }
+      
+      console.log('[iNaturalist Sound Classifier] Final is32bit value:', is32bit);
+      if (is32bit) {
+        console.log('[iNaturalist Sound Classifier] Logging 32-bit warning');
         ui.log(`<span class="insc-error">⚠ ${uiInputText.browser32bitWarning}</span>`);
       }
       

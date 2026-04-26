@@ -57,5 +57,6 @@
   "cacheClearError": "Falha ao limpar cache:",
   "customModelSettings": "Adicionar um Modelo Personalizado",
   "failedAnalysis": "Erro no processo de análise",
-  "formatNotSupported": " não suportado. Apenas suporte para modelos em formato ONNX."
+  "formatNotSupported": " não suportado. Apenas suporte para modelos em formato ONNX.",
+  "browser32bitWarning": "Aviso: seu navegador parece estar rodando em modo 32 bits. Isso pode causar erros de memória durante a análise. Para melhores resultados, utilize um navegador de 64 bits."
 }

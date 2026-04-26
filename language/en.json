@@ -57,5 +57,6 @@
   "cacheClearError": "Failed to clear cache:",
   "customModelSettings": "Add a Custom Model",
   "failedAnalysis": "Analysis failed",
-  "formatNotSupported": "format is not supported. Only ONNX models are supported in the current version."
+  "formatNotSupported": "format is not supported. Only ONNX models are supported in the current version.",
+  "browser32bitWarning": "Warning: your browser appears to be running in 32-bit mode. This may cause Out of Memory errors during analysis. Please use a 64-bit browser for best results."
 }

@@ -366,6 +366,15 @@
       }
 
       ui.log(`${uiInputText.initLog} <b>'${uiInputText.analysisButton}'</b>`);
+
+      if (navigator.userAgentData) {
+        const { bitness } = await navigator.userAgentData.getHighEntropyValues(['bitness']);
+        if (bitness === '32') {
+          ui.log(`<span class="insc-error">⚠ ${uiInputText.browser32bitWarning}</span>`);
+        }
+      } else if (navigator.userAgent.includes('WOW64')) {
+        ui.log(`<span class="insc-error">⚠ ${uiInputText.browser32bitWarning}</span>`);
+      }
       
     } catch (error) {
       console.warn("[iNaturalist Sound Classifier] Failed to check for sounds in this observation.", error);

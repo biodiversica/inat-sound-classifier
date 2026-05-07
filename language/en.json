@@ -3,7 +3,7 @@
   "language": "English",
   "extensionName": "iNaturalist Sound Classifier",
   "bioacousticModel": "Bioacoustic Model:",
-  "bioacousticModelHelp": "Bioacoustic models are automatically selected from an internal model list based on the overlap between the species geographic range (defined by a bounding box) and the current observation location. Users can also add custom models using the 'Advanced settings' section below. Models are downloaded once and cached for futher use. Currently, the only supported model format is ONNX.",
+  "bioacousticModelHelp": "Bioacoustic models are automatically selected from an internal model list based on the overlap between the species geographic range (defined by a bounding box) and the current observation location. Users can also add custom models using the 'Advanced settings' section below. Models are downloaded once and cached for futher use. Currently, the supported model formats are ONNX and TFLite.",
   "analysisButton": "Run Analysis",
   "advancedSettings": "+ Advanced settings",
   "confidence": "Confidence Threshold: ",
@@ -57,6 +57,6 @@
   "cacheClearError": "Failed to clear cache:",
   "customModelSettings": "Add a Custom Model",
   "failedAnalysis": "Analysis failed",
-  "formatNotSupported": "format is not supported. Only ONNX models are supported in the current version.",
+  "formatNotSupported": "format is not supported. Only ONNX and TFLite models are supported in the current version.",
   "browser32bitWarning": "Warning: your browser appears to be running in 32-bit mode. This may cause Out of Memory errors during analysis. Please use a 64-bit browser for best results."
 }

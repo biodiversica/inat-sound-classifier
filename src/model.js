@@ -48,6 +48,19 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
   }
 
   /**
+   * Checks whether an ArrayBuffer looks like a valid TFLite flatbuffer by
+   * inspecting the 4-byte file identifier at bytes 4–7 ("TFL3").
+   * @param {ArrayBuffer|null} buffer - The buffer to validate.
+   * @returns {boolean} `true` if the buffer passes basic TFLite format checks.
+   */
+  isValidTFLiteBuffer(buffer) {
+    if (!buffer || buffer.byteLength < 8) return false;
+    const view = new Uint8Array(buffer);
+    return view[4] === 0x54 && view[5] === 0x46 && // "TF"
+           view[6] === 0x4C && view[7] === 0x33;    // "L3"
+  }
+
+  /**
    * Checks whether an ArrayBuffer looks like a valid ONNX model by inspecting
    * its size and the first protobuf field tag byte.
    * @param {ArrayBuffer|null} buffer - The buffer to validate.
@@ -146,14 +159,18 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
   }
 
   /**
-   * Creates a Web Worker for ONNX Runtime inference using a blob URL.
-   * The blob URL approach avoids Content Security Policy restrictions that
-   * block loading worker scripts from extension URLs in content script context.
-   * @returns {Promise<void>} Resolves when the worker is initialized and ORT is ready.
+   * Creates a Web Worker for inference using a blob URL, dispatching to the
+   * correct backend based on model format. The blob URL approach avoids
+   * Content Security Policy restrictions in content script context.
+   * @param {"onnx"|"tflite"} [format="onnx"] - The model format to load.
+   * @returns {Promise<void>} Resolves when the worker is initialized and ready.
    */
-  _createWorker() {
+  _createWorker(format = 'onnx') {
     return new Promise((resolve, reject) => {
-      const workerScriptUrl = api.runtime.getURL("inference-worker.js");
+      const workerFile = format === 'tflite'
+        ? 'tflite/tflite-worker-bundle.js'
+        : 'inference-worker.js';
+      const workerScriptUrl = api.runtime.getURL(workerFile);
       // Fetch the worker script and create a blob URL so it runs
       // under the page's origin, avoiding content script CSP issues
       fetch(workerScriptUrl)
@@ -173,10 +190,11 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
             }
           };
 
-          // Initialize ORT inside the worker
-          const ortUrl = api.runtime.getURL("onnx/ort.min.js");
-          const wasmPaths = api.runtime.getURL("onnx/");
-          this._sendMessage({ type: "init", ortUrl, wasmPaths })
+          const initMsg = format === 'tflite'
+            ? { type: "init", wasmPath: api.runtime.getURL("tflite/wasm/") }
+            : { type: "init", ortUrl: api.runtime.getURL("onnx/ort.min.js"), wasmPaths: api.runtime.getURL("onnx/") };
+
+          this._sendMessage(initMsg)
             .then(() => resolve())
             .catch(reject);
         })
@@ -246,9 +264,10 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
    */
   async loadModel(modelConfig) {
     // Check model format
-    if (modelConfig.format !== 'onnx') {
+    const SUPPORTED_FORMATS = ['onnx', 'tflite'];
+    if (!SUPPORTED_FORMATS.includes(modelConfig.format)) {
       this.ui.log(`<span class="insc-error">${this.ui.uiInputText.failedAnalysis}: ${modelConfig.format} ${this.ui.uiText.formatNotSupported}</span>`);
-      throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}. Only ONNX models are supported.`);
+      throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}.`);
     }
 
     // Terminate old worker to free WASM memory before starting fresh
@@ -258,7 +277,7 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
     this.ui.log(`<span class="insc-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
 
     // Print model config
-    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='insc-link-taxa'>${modelConfig.name} v${modelConfig.version}</a>`);
+    this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='insc-link-taxa'>${modelConfig.name} v${modelConfig.version}</a> (${modelConfig.format})`);
     this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${modelConfig.windowSize}s`);
     this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
     this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
@@ -271,8 +290,14 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
     const modelBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
 
     // Validate the model buffer
-    if (!this.isValidONNXBuffer(modelBuffer)) {
-      throw new Error("Downloaded model does not appear to be a valid ONNX file.");
+    if (modelConfig.format === 'tflite') {
+      if (!this.isValidTFLiteBuffer(modelBuffer)) {
+        throw new Error("Downloaded model does not appear to be a valid TFLite file.");
+      }
+    } else {
+      if (!this.isValidONNXBuffer(modelBuffer)) {
+        throw new Error("Downloaded model does not appear to be a valid ONNX file.");
+      }
     }
 
     const labelsText = await this.fetchWithCache(modelConfig.labels.url, "text");
@@ -280,7 +305,7 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
     this.labels = this.parseLabels(labelsText, modelConfig.labels);
 
     // Create a fresh worker and load the model inside it
-    await this._createWorker();
+    await this._createWorker(modelConfig.format);
     const result = await this._sendMessage(
       { type: "loadModel", modelBuffer },
       [modelBuffer]

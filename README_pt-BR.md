@@ -1,16 +1,16 @@
 # iNaturalist Sound Classifier (Extensão para Navegador)
 
-Uma extensão de navegador para biólogos e cientistas cidadãos analisarem gravações de áudio diretamente nas páginas de observação do iNaturalist. Executa modelos de aprendizado de máquina localmente no navegador para identificar espécies a partir do som e valida as detecções com dados de ocorrência geográfica do GBIF e iNaturalist. Atualmente restrito a modelos no formato ONNX.
+Uma extensão de navegador para biólogos e cientistas cidadãos analisarem gravações de áudio diretamente nas páginas de observação do iNaturalist. Executa modelos de aprendizado de máquina localmente no navegador para identificar espécies a partir do som e valida as detecções com dados de ocorrência geográfica do GBIF e iNaturalist. Suporta modelos nos formatos **ONNX** e **TFLite**.
 
 Compatível com **navegadores Chromium** (Chrome, Brave, Edge) e **Firefox**.
 
 ## Principais Funcionalidades
 
-* **Inferência Nativa no Navegador:** Executa modelos ONNX localmente usando ONNX Runtime WebAssembly em um Web Worker isolado. Nenhum dado de áudio sai da sua máquina.
+* **Inferência Nativa no Navegador:** Executa modelos localmente em um Web Worker isolado — modelos ONNX via ONNX Runtime WebAssembly, modelos TFLite via [LiteRT Wasm](https://www.npmjs.com/package/@litertjs/core). Nenhum dado de áudio sai da sua máquina.
 * **Suporte Multi-Navegador:** Funciona como extensão Chrome/Chromium (Manifest V3 service worker) e como complemento Firefox (Manifest V3 event page).
 * **Filtragem Geográfica:** Filtra automaticamente o registro de modelos com base nas coordenadas da observação, exibindo apenas modelos relevantes para a região.
 * **Validação Geográfica:** As melhores detecções são verificadas contra bounding boxes de ocorrência do GBIF e iNaturalist para sinalizar espécies fora da área de distribuição conhecida.
-* **Suporte Multi-Modelo:** Inclui **[BirdNET v2.4](https://huggingface.co/justinchuby/BirdNET-onnx)** e **[Google Perch v2.0](https://huggingface.co/justinchuby/Perch-onnx)**. Modelos personalizados podem ser adicionados via configuração JSON ou pela interface.
+* **Suporte Multi-Modelo:** Inclui **[BirdNET v2.4](https://huggingface.co/justinchuby/BirdNET-onnx)** (ONNX e TFLite) e **[Google Perch v2.0](https://huggingface.co/justinchuby/Perch-onnx)** (ONNX). Modelos personalizados podem ser adicionados via configuração JSON ou pela interface.
 * **Parsing Flexível de Labels:** Arquivos de labels dos modelos podem usar qualquer delimitador (vírgula, tab, ponto e vírgula, underscore, etc.), com opção de pular cabeçalho e seleção de coluna.
 * **Ativação Configurável:** Cada modelo especifica sua função de ativação (`softmax`, `sigmoid` ou `none`) na configuração JSON.
 * **Cache Local:** Modelos baixados são armazenados no `CacheStorage` do navegador para carregamento instantâneo em sessões futuras.
@@ -30,8 +30,8 @@ Compatível com **navegadores Chromium** (Chrome, Brave, Edge) e **Firefox**.
    git clone https://github.com/biodiversica/inat-sound-classifier.git
    cd inat-sound-classifier
    npm install
-   npm run sync-onnx
    ```
+   Isso sincroniza automaticamente os binários do ONNX Runtime e empacota o worker LiteRT Wasm via o script `postinstall`.
 
 2. **Compile para o seu navegador:**
 
@@ -77,8 +77,10 @@ inat-sound-classifier/
 +-- src/audio.js            # iNatSCAudio: download, decodificação, resampling, chunking
 +-- src/geo.js              # iNatSCGeo: validação geográfica GBIF/iNaturalist
 +-- src/background.js       # Service worker / event page: proxy CORS, downloads streaming
-+-- src/inference-worker.js # Web Worker: inferência ONNX Runtime WASM
-+-- onnx/                   # Binários WASM do ONNX Runtime (sincronizados do node_modules)
++-- src/inference-worker.js        # Web Worker: inferência ONNX Runtime Wasm
++-- src/tflite-inference-worker.js # Web Worker: inferência LiteRT (TFLite) Wasm (fonte, empacotado pelo esbuild)
++-- onnx/                          # Binários Wasm do ONNX Runtime (sincronizados do node_modules)
++-- tflite/                        # Worker bundle LiteRT Wasm + binários Wasm (gerado pelo postinstall)
 +-- model_zoo/              # Arquivos JSON de configuração de modelos + index.json
 +-- language/               # Arquivos JSON de tradução da interface + index.json
 +-- styles/                 # Temas CSS (inaturalist.css, biodiversica.css)
@@ -95,7 +97,7 @@ inat-sound-classifier/
 ### Pela Interface
 
 1. Abra o painel de **Configurações Avançadas** em qualquer página de observação.
-2. Cole a configuração JSON do modelo na área de texto **Modelo Personalizado**, seguindo este formato (urls acessíveis para download de modelos são huggingface.co e zenodo.org):
+2. Cole a configuração JSON do modelo na área de texto **Modelo Personalizado**, seguindo este formato (URLs aceitas para download de modelos são huggingface.co e zenodo.org):
 
    ```json
    {
@@ -120,6 +122,7 @@ inat-sound-classifier/
      "taxa": ["aves"]
    }
    ```
+   Defina `"format"` como `"onnx"` ou `"tflite"` conforme o tipo do arquivo do modelo.
 
 3. Clique em **Adicionar**. O modelo é salvo no `localStorage` e persiste entre sessões.
 
@@ -197,7 +200,9 @@ Verifique se a extensão tem permissões para o domínio de hospedagem do modelo
 
 ## Licença
 
-O código fonte é distribuído sob a licença [GPL-3.0](LICENSE). Os modelos disponíveis possuem licenças específicas:
+O código fonte é distribuído sob a licença [GPL-3.0](LICENSE). Os runtimes embutidos e modelos possuem licenças próprias:
 
+* ONNX Runtime: [MIT](https://github.com/microsoft/onnxruntime/blob/main/LICENSE)
+* LiteRT (`@litertjs/core`): [Apache 2.0](https://github.com/google-ai-edge/LiteRT/blob/main/LICENSE)
 * BirdNET v2.4: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 * Perch v2.0: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)

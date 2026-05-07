@@ -37,6 +37,7 @@ const JS_SOURCES = [
 // Asset directories to copy as-is into the extension package
 const ASSET_SOURCES = [
   "onnx",
+  "tflite",
   "model_zoo",
   "language",
   "styles",

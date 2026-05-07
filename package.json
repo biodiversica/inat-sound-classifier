@@ -1,11 +1,13 @@
 {
   "dependencies": {
-    "onnxruntime-web": "^1.24.3"
+    "onnxruntime-web": "^1.24.3",
+    "@litertjs/core": "^2.5.0"
   },
   "scripts": {
     "test": "jest",
     "sync-onnx": "mkdir -p onnx && cp node_modules/onnxruntime-web/dist/ort.min.js node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs onnx/",
-    "postinstall": "npm run sync-onnx",
+    "bundle-litert": "mkdir -p tflite/wasm && node_modules/.bin/esbuild src/tflite-inference-worker.js --bundle --format=iife --outfile=tflite/tflite-worker-bundle.js && cp node_modules/@litertjs/core/wasm/* tflite/wasm/",
+    "postinstall": "npm run sync-onnx && npm run bundle-litert",
     "build": "node scripts/build.js",
     "build:chrome": "node scripts/build.js chrome",
     "build:firefox": "node scripts/build.js firefox",
@@ -14,6 +16,7 @@
   },
   "devDependencies": {
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0"
+    "jest-environment-jsdom": "^30.2.0",
+    "esbuild": "^0.23.0"
   }
 }

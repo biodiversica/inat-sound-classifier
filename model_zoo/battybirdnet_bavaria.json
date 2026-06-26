@@ -1,0 +1,25 @@
+{
+  "id": "battybirdnet_bavaria",
+  "name": "BattyBirdNET Bavaria",
+  "version": 1.0,
+  "about": "https://huggingface.co/tphakala/BattyBirdNET-onnx",
+  "type": "classifier",
+  "backbone": "birdnet_v2.4",
+  "modelUrl": "https://huggingface.co/tphakala/BattyBirdNET-onnx/resolve/main/fp32/BattyBirdNET-Bavaria-256kHz_fp32.onnx",
+  "labels": {
+    "url": "https://huggingface.co/tphakala/BattyBirdNET-onnx/resolve/main/labels/BattyBirdNET-Bavaria-256kHz_Labels.txt",
+    "header": false,
+    "delimiter": "_",
+    "column": 0
+  },
+  "sampleRate": 256000,
+  "windowSize": 0.5625,
+  "activation": "sigmoid",
+  "inputIndex": 0,
+  "outputIndex": 0,
+  "bbox": null,
+  "format": "onnx",
+  "taxa": [
+    "chiroptera"
+  ]
+}

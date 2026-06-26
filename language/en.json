@@ -42,6 +42,7 @@
   "inputIndex": "Input index",
   "outputIndex": "Output index",
   "activation": "Activation",
+  "backbone": "Backbone",
   "sources": "Sources",
   "preparingModel": "Preparing model session",
   "loadingSuccess": "Model successfully loaded to memory",

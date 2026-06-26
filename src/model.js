@@ -13,11 +13,34 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
     this.worker = null;
     this.labels = [];
     this.currentModelConfig = null;
+    this.currentBackboneConfig = null;
     this.currentLanguageConfig = null;
     this.inputNames = null;
     this.outputNames = null;
+    // Resolved I/O tensor names used at predict time.
+    this.isClassifier = false;
+    this.inputName = null;        // full model input
+    this.outputName = null;       // full model output (logits)
+    this.backboneInputName = null; // classifier: backbone audio input
+    this.embeddingName = null;     // classifier: backbone embedding output
+    this.headInputName = null;     // classifier: head embedding input
+    this.headOutputName = null;    // classifier: head logits output
     this._pendingResolve = null;
     this._pendingReject = null;
+  }
+
+  /**
+   * Resolves a tensor name using a name-first, index-fallback strategy.
+   * Newer (backbone/classifier) configs reference tensors by name; legacy
+   * "full" model configs reference them by numeric index.
+   * @param {string[]} names - Tensor names exposed by the session.
+   * @param {string} [nameValue] - Preferred tensor name from the config.
+   * @param {number} [indexValue] - Fallback index from the config.
+   * @returns {string} The resolved tensor name.
+   */
+  _resolveIO(names, nameValue, indexValue) {
+    if (nameValue && names.includes(nameValue)) return nameValue;
+    return names[indexValue ?? 0];
   }
 
   /**
@@ -230,6 +253,13 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
     }
     this.inputNames = null;
     this.outputNames = null;
+    this.isClassifier = false;
+    this.inputName = null;
+    this.outputName = null;
+    this.backboneInputName = null;
+    this.embeddingName = null;
+    this.headInputName = null;
+    this.headOutputName = null;
   }
 
   /**
@@ -238,55 +268,107 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
    * and initializes the ORT inference session.
    * @param {Object} modelConfig - Model configuration from the model zoo JSON.
    * @param {string} modelConfig.format - Must be "onnx".
-   * @param {string} modelConfig.modelUrl - URL of the ONNX model file.
+   * @param {string} modelConfig.modelUrl - URL of the ONNX model file (full model or classifier head).
    * @param {Object} modelConfig.labels - Label file configuration passed to {@link parseLabels}.
    * @param {string} modelConfig.activation - Activation function: "softmax", "sigmoid", or "none".
+   * @param {string} [modelConfig.type] - "full" (default, single-stage) or "classifier" (head requiring a backbone).
+   * @param {Object|null} [backbone] - Resolved backbone config (audio -> embedding) for "classifier" models.
    * @returns {Promise<void>}
-   * @throws {Error} If the model format is not ONNX or the downloaded buffer is invalid.
+   * @throws {Error} If a format is not ONNX, a buffer is invalid, or preprocessing length mismatches the backbone.
    */
-  async loadModel(modelConfig) {
-    // Check model format
+  async loadModel(modelConfig, backbone = null) {
+    const isClassifier = modelConfig.type === "classifier";
+
+    // Check model format(s)
     if (modelConfig.format !== 'onnx') {
       this.ui.log(`<span class="insc-error">${this.ui.uiInputText.failedAnalysis}: ${modelConfig.format} ${this.ui.uiText.formatNotSupported}</span>`);
       throw new Error(`[iNaturalist Sound Classifier] Unsupported model format: ${modelConfig.format}. Only ONNX models are supported.`);
+    }
+    if (isClassifier) {
+      if (!backbone) {
+        throw new Error(`[iNaturalist Sound Classifier] Classifier model "${modelConfig.id || modelConfig.name}" has no resolvable backbone.`);
+      }
+      if (backbone.format !== 'onnx') {
+        throw new Error(`[iNaturalist Sound Classifier] Unsupported backbone format: ${backbone.format}. Only ONNX backbones are supported.`);
+      }
+    }
+
+    // Resolve preprocessing (sampleRate/windowSize). For classifier models the
+    // head may override the backbone's rate/window to feed the same input length
+    // from a different time/frequency scale (e.g. time-expanded bat audio), as
+    // long as the resulting sample count matches the backbone input length.
+    const sampleRate = isClassifier ? (modelConfig.sampleRate ?? backbone.sampleRate) : modelConfig.sampleRate;
+    const windowSize = isClassifier ? (modelConfig.windowSize ?? backbone.windowSize) : modelConfig.windowSize;
+
+    if (isClassifier) {
+      const backboneLength = Math.round(backbone.sampleRate * backbone.windowSize);
+      const headLength = Math.round(sampleRate * windowSize);
+      if (headLength !== backboneLength) {
+        throw new Error(`[iNaturalist Sound Classifier] Preprocessing length mismatch: ${sampleRate}Hz x ${windowSize}s = ${headLength} samples, but backbone "${backbone.name}" expects ${backboneLength}.`);
+      }
     }
 
     // Terminate old worker to free WASM memory before starting fresh
     this.terminateWorker();
 
     this.currentModelConfig = modelConfig;
+    this.currentBackboneConfig = isClassifier ? backbone : null;
+    this.isClassifier = isClassifier;
     this.ui.log(`<span class="insc-line-header">${this.ui.uiInputText.preparingModel}...</span>`);
 
     // Print model config
     this.ui.log(`<b>${this.ui.uiInputText.selectedModel}:</b> <a href="${modelConfig.about}" target="_blank" class='insc-link-taxa'>${modelConfig.name} v${modelConfig.version}</a>`);
-    this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${modelConfig.windowSize}s`);
-    this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${modelConfig.sampleRate}Hz`);
-    this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
-    this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
+    if (isClassifier) {
+      this.ui.log(`- ${this.ui.uiInputText.backbone || "Backbone"}: <a href="${backbone.about}" target="_blank" class='insc-link-taxa'>${backbone.name} v${backbone.version}</a>`);
+    }
+    this.ui.log(`- ${this.ui.uiInputText.windowDuration}: ${windowSize}s`);
+    this.ui.log(`- ${this.ui.uiInputText.sampleRate}: ${sampleRate}Hz`);
     this.ui.log(`- ${this.ui.uiInputText.activation}: ${modelConfig.activation}`);
-    this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='insc-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='insc-link-taxa'><u>labels</u></a>`);
+    if (isClassifier) {
+      this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${backbone.modelUrl}" target="_blank" class='insc-link-taxa'><u>backbone</u></a> | <a href="${modelConfig.modelUrl}" target="_blank" class='insc-link-taxa'><u>head</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='insc-link-taxa'><u>labels</u></a>`);
+    } else {
+      this.ui.log(`- ${this.ui.uiInputText.inputIndex}: ${modelConfig.inputIndex}`);
+      this.ui.log(`- ${this.ui.uiInputText.outputIndex}: ${modelConfig.outputIndex}`);
+      this.ui.log(`- ${this.ui.uiInputText.sources}: <a href="${modelConfig.modelUrl}" target="_blank" class='insc-link-taxa'><u>model</u></a> | <a href="${modelConfig.labels.url}" target="_blank" class='insc-link-taxa'><u>labels</u></a>`);
+    }
 
+    // Fetch the head/full model buffer and (optionally) the backbone buffer, with caching.
+    let backboneBuffer = null;
+    if (isClassifier) {
+      backboneBuffer = await this.fetchWithCache(backbone.modelUrl, "arrayBuffer");
+      if (!this.isValidONNXBuffer(backboneBuffer)) {
+        throw new Error("Downloaded backbone does not appear to be a valid ONNX file.");
+      }
+    }
 
-    // Fetch model buffer and labels using Cache
-    const modelBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
-
-    // Validate the model buffer
-    if (!this.isValidONNXBuffer(modelBuffer)) {
+    const headBuffer = await this.fetchWithCache(modelConfig.modelUrl, "arrayBuffer");
+    if (!this.isValidONNXBuffer(headBuffer)) {
       throw new Error("Downloaded model does not appear to be a valid ONNX file.");
     }
 
     const labelsText = await this.fetchWithCache(modelConfig.labels.url, "text");
-
     this.labels = this.parseLabels(labelsText, modelConfig.labels);
 
-    // Create a fresh worker and load the model inside it
+    // Create a fresh worker and load the model(s) inside it
     await this._createWorker();
+    const transfer = backboneBuffer ? [backboneBuffer, headBuffer] : [headBuffer];
     const result = await this._sendMessage(
-      { type: "loadModel", modelBuffer },
-      [modelBuffer]
+      { type: "loadModels", backboneBuffer, headBuffer },
+      transfer
     );
     this.inputNames = result.inputNames;
     this.outputNames = result.outputNames;
+
+    // Resolve I/O tensor names for predict time.
+    if (isClassifier) {
+      this.backboneInputName = this._resolveIO(result.backboneInputNames, backbone.inputName, backbone.inputIndex);
+      this.embeddingName = this._resolveIO(result.backboneOutputNames, backbone.embeddingName, backbone.embeddingIndex);
+      this.headInputName = this._resolveIO(result.inputNames, modelConfig.inputName, modelConfig.inputIndex);
+      this.headOutputName = this._resolveIO(result.outputNames, modelConfig.outputName, modelConfig.outputIndex);
+    } else {
+      this.inputName = this._resolveIO(result.inputNames, modelConfig.inputName, modelConfig.inputIndex);
+      this.outputName = this._resolveIO(result.outputNames, modelConfig.outputName, modelConfig.outputIndex);
+    }
 
     this.ui.log(`<b>${this.ui.uiInputText.loadingSuccess}</b>`);
   }
@@ -321,15 +403,24 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
    */
   async predictChunk(chunk) {
     const config = this.currentModelConfig;
-    const inputName = this.inputNames[config.inputIndex];
-    const outputName = this.outputNames[config.outputIndex];
 
-    const result = await this._sendMessage({
-      type: "predict",
-      chunk,
-      inputName,
-      outputName,
-    });
+    const msg = this.isClassifier
+      ? {
+          type: "predict",
+          chunk,
+          backboneInputName: this.backboneInputName,
+          embeddingName: this.embeddingName,
+          headInputName: this.headInputName,
+          headOutputName: this.headOutputName,
+        }
+      : {
+          type: "predict",
+          chunk,
+          inputName: this.inputName,
+          outputName: this.outputName,
+        };
+
+    const result = await this._sendMessage(msg);
     const logits = result.logits;
 
     let bestIdx = 0, bestScore = -Infinity;

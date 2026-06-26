@@ -5,6 +5,7 @@ const api = typeof browser !== "undefined" ? browser : chrome;
 
 window.iNatSCConfig = {
   modelRegistry: {},
+  backboneRegistry: {},
   uiText: {},
   overlapPercentage: parseFloat(localStorage.getItem('insc-overlap') ?? '0'),
   confidenceThreshold: parseFloat(localStorage.getItem('insc-confidence') ?? '0.5'),

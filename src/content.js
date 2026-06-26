@@ -59,6 +59,18 @@
     const obsLocation = getObservationLocation();
 
     try {
+      // 0. Load the backbone registry (shared by classifier-head models).
+      //    Backbones are not directly selectable; they are referenced by id
+      //    (or inlined) from "classifier" model configs.
+      try {
+        const backboneUrl = api.runtime.getURL("model_zoo/backbones.json");
+        const backboneRes = await fetch(backboneUrl);
+        window.iNatSCConfig.backboneRegistry = await backboneRes.json();
+      } catch (e) {
+        window.iNatSCConfig.backboneRegistry = {};
+        console.warn("[iNaturalist Sound Classifier] Failed to load backbone registry:", e);
+      }
+
       // 1. Fetch the index of available models
       const indexUrl = api.runtime.getURL("model_zoo/index.json");
       const indexRes = await fetch(indexUrl);
@@ -137,6 +149,27 @@
   }
 
   /**
+   * Resolves the backbone for a "classifier" model config.
+   * The `backbone` field may be a string id (looked up in the bundled backbone
+   * registry) or an inline backbone object.
+   * @param {Object} modelConfig - The classifier model configuration.
+   * @returns {Object} The resolved backbone config.
+   * @throws {Error} If no backbone is specified or the id cannot be resolved.
+   */
+  function resolveBackbone(modelConfig) {
+    const ref = modelConfig.backbone;
+    if (!ref) {
+      throw new Error(`Classifier model "${modelConfig.name}" is missing a "backbone".`);
+    }
+    if (typeof ref === "object") return ref;
+    const backbone = window.iNatSCConfig.backboneRegistry[ref];
+    if (!backbone) {
+      throw new Error(`Unknown backbone "${ref}" for model "${modelConfig.name}".`);
+    }
+    return backbone;
+  }
+
+  /**
    * Main analysis pipeline: loads the selected model, decodes all sound files,
    * runs chunk-by-chunk inference, validates top detections against GBIF/iNaturalist
    * geographic data, and logs results. The inference worker is terminated on completion
@@ -157,24 +190,32 @@
       const urls = await window.iNatSCAudio.checkObservationSounds(obsId);
       // if (!urls.length) return ui.log(languageConfig.audioNotFound);
 
+      // Resolve the backbone (classifier models) and the effective audio
+      // preprocessing. For classifier models the head may override the
+      // backbone's sampleRate/windowSize as long as the resulting input length
+      // matches (validated in engine.loadModel).
+      const backbone = modelConfig.type === "classifier" ? resolveBackbone(modelConfig) : null;
+      const sampleRate = backbone ? (modelConfig.sampleRate ?? backbone.sampleRate) : modelConfig.sampleRate;
+      const windowSize = backbone ? (modelConfig.windowSize ?? backbone.windowSize) : modelConfig.windowSize;
+
       if (!engine) engine = new window.iNatSCModelEngine(ui);
-      await engine.loadModel(modelConfig);
+      await engine.loadModel(modelConfig, backbone);
 
       let detections = [];
       let soundFileIndex = 1;
       for (const url of urls) {
         ui.log(`<span class="insc-line-header">${languageConfig.analyzingSound} ${soundFileIndex}...</span>`);
         const decoded = await window.iNatSCAudio.decodeAudio(url);
-        const samples = await window.iNatSCAudio.resample(decoded, modelConfig.sampleRate);
-        const chunks = window.iNatSCAudio.chunkAudio(samples, modelConfig.sampleRate, modelConfig.windowSize, window.iNatSCConfig.overlapPercentage);
+        const samples = await window.iNatSCAudio.resample(decoded, sampleRate);
+        const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, window.iNatSCConfig.overlapPercentage);
 
         ui.printTableHeader(window.iNatSCConfig.timeCellWidth, window.iNatSCConfig.speciesCellWidth, window.iNatSCConfig.confidenceCellWidth, "insc-header");
 
         for (let i = 0; i < chunks.length; i++) {
           await new Promise(r => setTimeout(r, 0));
           const res = await engine.predictChunk(chunks[i]);
-          const t1 = (i * (modelConfig.windowSize * (1 - window.iNatSCConfig.overlapPercentage))).toFixed(1);
-          const t2 = (i * (modelConfig.windowSize * (1 - window.iNatSCConfig.overlapPercentage)) + modelConfig.windowSize).toFixed(1);
+          const t1 = (i * (windowSize * (1 - window.iNatSCConfig.overlapPercentage))).toFixed(1);
+          const t2 = (i * (windowSize * (1 - window.iNatSCConfig.overlapPercentage)) + windowSize).toFixed(1);
           if (res.score > window.iNatSCConfig.confidenceThreshold) {
             const speciesName = res.label.replace(/[\n\r]/g, "").trim();
             const timeRange = `${t1} - ${t2}s`;

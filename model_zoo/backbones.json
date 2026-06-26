@@ -1,0 +1,30 @@
+{
+  "perch_v2.0": {
+    "id": "perch_v2.0",
+    "name": "Perch backbone",
+    "version": 2.0,
+    "role": "backbone",
+    "about": "https://huggingface.co/biodiversica/Perch-onnx-backbone",
+    "modelUrl": "https://huggingface.co/biodiversica/Perch-onnx-backbone/resolve/main/perch_v2_backbone.onnx",
+    "sampleRate": 32000,
+    "windowSize": 5,
+    "inputName": "inputs",
+    "embeddingName": "embedding",
+    "embeddingSize": 1536,
+    "format": "onnx"
+  },
+  "birdnet_v2.4": {
+    "id": "birdnet_v2.4",
+    "name": "BirdNET backbone",
+    "version": 2.4,
+    "role": "backbone",
+    "about": "https://huggingface.co/biodiversica/BirdNET-onnx-backbone",
+    "modelUrl": "https://huggingface.co/biodiversica/BirdNET-onnx-backbone/resolve/main/model_backbone.onnx",
+    "sampleRate": 48000,
+    "windowSize": 3,
+    "inputName": "INPUT",
+    "embeddingName": "embedding",
+    "embeddingSize": 1024,
+    "format": "onnx"
+  }
+}

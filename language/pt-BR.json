@@ -42,6 +42,7 @@
   "inputIndex": "Índice de entrada",
   "outputIndex": "Índice de saída",
   "activation": "Ativação",
+  "backbone": "Backbone",
   "sources": "Fontes",
   "preparingModel": "Preparando modelo para análise",
   "loadingSuccess": "Modelo carregado com sucesso na memória.",

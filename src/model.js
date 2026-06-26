@@ -374,11 +374,22 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
   }
 
   /**
-   * Computes the sigmoid activation for a single value.
+   * Computes the (parametrized) sigmoid activation for a single logit.
+   * Matches BirdNET-style sensitivity/bias controls: `bias` shifts the curve
+   * horizontally (values > 1.0 are more sensitive / higher scores; < 1.0 more
+   * conservative), and `sensitivity` controls steepness. The logit is clipped
+   * to [-20, 20] after the bias shift to avoid overflow. With the defaults
+   * (sensitivity -1.0, bias 1.0) this reduces to the standard sigmoid.
    * @param {number} x - Input logit.
+   * @param {number} [sensitivity=-1.0] - Steepness of the sigmoid curve.
+   * @param {number} [bias=1.0] - Horizontal shift, typically in [0.01, 1.99].
    * @returns {number} Value in the range (0, 1).
    */
-  sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+  sigmoid(x, sensitivity = -1.0, bias = 1.0) {
+    const transformedBias = (bias - 1.0) * 10.0;
+    const clipped = Math.max(-20, Math.min(20, x + transformedBias));
+    return 1 / (1 + Math.exp(sensitivity * clipped));
+  }
 
   /**
    * Computes the softmax probability distribution over an array of logits.
@@ -432,8 +443,10 @@ window.iNatSCModelEngine = class iNatSCModelEngine {
         if (probs[i] > bestScore) { bestScore = probs[i]; bestIdx = i; }
       }
     } else if (activation === "sigmoid") {
+      const sensitivity = config.sigmoid_sensitivity ?? -1.0;
+      const bias = config.sigmoid_bias ?? 1.0;
       for (let i = 0; i < logits.length; i++) {
-        const score = this.sigmoid(logits[i]);
+        const score = this.sigmoid(logits[i], sensitivity, bias);
         if (score > bestScore) { bestScore = score; bestIdx = i; }
       }
     } else {

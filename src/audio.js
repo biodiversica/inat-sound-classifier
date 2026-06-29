@@ -28,11 +28,19 @@ window.iNatSCAudio = {
   /**
    * Fetches an audio file via the background script and decodes it into an AudioBuffer.
    * The AudioContext is closed after decoding to free resources.
+   *
+   * `decodeAudioData` resamples the decoded audio to the AudioContext's sample
+   * rate, so the context MUST be created at the model's target rate. Otherwise a
+   * default-rate context (~48 kHz) would low-pass the audio at decode time and
+   * irreversibly discard any content above ~24 kHz — which for ultrasonic models
+   * is the entire signal. Decoding at the target rate also makes the subsequent
+   *  {@link resample} call a no-op.
    * @param {string} url - URL of the audio file.
+   * @param {number} [targetSampleRate] - Sample rate (Hz) to decode at; defaults to the device rate.
    * @returns {Promise<AudioBuffer>} Decoded audio buffer.
    * @throws {Error} If the background fetch fails.
    */
-  async decodeAudio(url) {
+  async decodeAudio(url, targetSampleRate) {
     // Ask background.js to fetch the file
     const response = await new Promise(resolve => {
       api.runtime.sendMessage({ type: "FETCH_AUDIO", url: url }, resolve);
@@ -51,12 +59,19 @@ window.iNatSCAudio = {
     }
     const arrayBuffer = bytes.buffer;
 
-    // Decode the audio
-    const ctx = new AudioContext();
+    // Decode the audio at the model's target rate to preserve the full band.
+    // Fall back to a default-rate context if the browser rejects the requested
+    // rate (resample() then converts to the target rate as before).
+    let ctx;
+    try {
+      ctx = targetSampleRate ? new AudioContext({ sampleRate: targetSampleRate }) : new AudioContext();
+    } catch (e) {
+      ctx = new AudioContext();
+    }
     const decoded = await ctx.decodeAudioData(arrayBuffer);
-    
+
     // Close the AudioContext when done to free up memory
-    await ctx.close(); 
+    await ctx.close();
     return decoded;
   },
 

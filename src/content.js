@@ -205,7 +205,7 @@
       let soundFileIndex = 1;
       for (const url of urls) {
         ui.log(`<span class="insc-line-header">${languageConfig.analyzingSound} ${soundFileIndex}...</span>`);
-        const decoded = await window.iNatSCAudio.decodeAudio(url);
+        const decoded = await window.iNatSCAudio.decodeAudio(url, sampleRate);
         const samples = await window.iNatSCAudio.resample(decoded, sampleRate);
         const chunks = window.iNatSCAudio.chunkAudio(samples, sampleRate, windowSize, window.iNatSCConfig.overlapPercentage);
 
